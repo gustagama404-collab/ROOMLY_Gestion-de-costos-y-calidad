@@ -358,6 +358,7 @@ function viewInicio(){
   const lbl=d=>d.exp.type==='fijo'?d.exp.cat+' de '+MESES[Number(monthOf(d.exp.date).slice(5))-1]:d.exp.desc;
   const pl=(n,w)=>n+' '+w+(n===1?'':'s');
   let html='';
+  if(CLOUD&&isAdmin()&&(h.requests||[]).length)html+='<div class="alert info"><b>'+(h.requests.length===1?esc(h.requests[0].name)+' quiere unirse al hogar':h.requests.length+' personas quieren unirse al hogar')+'</b><button class="btn sm" style="align-self:flex-start" data-a="tab" data-v="ajustes">Revisar solicitudes</button></div>';
   if(h.demo){const sf=h.seededFor||h.expenses.reduce((a,e)=>monthOf(e.date)>a?monthOf(e.date):a,'');
     html+=sf&&sf<CUR?'<div class="alert bad small"><b>Los datos de ejemplo son de '+monthName(sf)+'.</b><span>Actualízalos antes de presentar para que el mes actual tenga gastos.</span><button class="btn sm" style="align-self:flex-start" data-a="askReset">Actualizar datos de ejemplo</button></div>'
       :'<div class="alert info small"><span><b>Datos de ejemplo.</b> Hogar de demostración para la sustentación.</span></div>';}
@@ -455,24 +456,44 @@ function viewEquidad(){
 
 const tesLogHtml=h=>{const L=(h.tesLog||[]).slice(-5).reverse();return L.length?'<div class="small muted"><b>Últimos cambios de tesorero</b><br>'+L.map(x=>dmy(x.at.slice(0,10))+' '+x.at.slice(11)+' · '+esc(memberById(h,x.by).name)+' asignó a '+(x.to?esc(memberById(h,x.to).name):'nadie')+' para '+monthName(x.month)+(x.from?' (antes: '+esc(memberById(h,x.from).name)+')':'')).join('<br>')+'</div>':''};
 function viewAjustes(){
-  const h=home(), m=me();
+  const h=home(), m=me(), adm=isAdmin();
   const tk=ui.tesMonth||CUR;
-  let html=CLOUD?'<section class="card"><h2>Tu cuenta</h2><p class="small muted">Conectado con Google como <b>'+esc(cs.user.email||'')+'</b>. En este hogar eres <b>'+esc(m.name)+'</b> (Yape '+esc(m.yape)+').</p><div style="display:flex;gap:8px;flex-wrap:wrap">'+(AUTH_GOOGLE?'<button class="btn sec" data-a="cProfile">Editar mi perfil</button>':'<button class="btn sec" data-a="cChangePass">Cambiar contraseña</button>')+'<button class="btn sec" data-a="cHomes">Cambiar de hogar</button><button class="btn danger" data-a="cLogout">Cerrar sesión</button></div></section>':'';
-  html+='<section class="card"><h2>Tesorero por mes</h2><p class="small muted">El hogar lo elige por consenso fuera de la app; aquí se registra quién cobra las cuotas fijas de cada mes. Cambiarlo solo afecta los gastos fijos que se registren después: los ya registrados siguen a nombre de quien era tesorero.</p>'+
+  const admName=adminName(h);
+  let html='';
+  if(CLOUD){
+    html+='<section class="card"><h2>Tu cuenta</h2><p class="small muted">Conectado con Google como <b>'+esc(cs.user.email||'')+'</b>. En este hogar eres <b>'+esc(m.name)+'</b> (Yape '+esc(m.yape)+')'+(adm?' y eres el <b>administrador</b>':'')+'.</p>'+
+     '<div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn sec" data-a="cProfile">Editar mi perfil</button><button class="btn sec" data-a="cHomes">Cambiar de hogar</button><button class="btn sec" data-a="cLogout">Cerrar sesión</button></div>'+
+     '<details><summary style="cursor:pointer;font-weight:600;color:var(--brand)">Privacidad y mis datos</summary><div style="display:flex;flex-direction:column;gap:10px;margin-top:10px;align-items:flex-start">'+
+     '<button class="btn ghost sm" data-a="privacy">Ver aviso de privacidad</button><button class="btn sec" data-a="askLeaveHome">Salir de este hogar</button><button class="btn danger" data-a="askDelete">Eliminar mi cuenta y mis datos</button></div></details></section>';
+    if(adm&&(h.requests||[]).length)html+=requestsCard(h);
+  }
+  html+='<section class="card"><h2>Tesorero por mes</h2><p class="small muted">El hogar lo elige por consenso fuera de la app; aquí se registra quién cobra las cuotas fijas de cada mes. Cambiarlo solo afecta los gastos fijos que se registren después: los ya registrados siguen a nombre de quien era tesorero.'+(adm?'':' Solo '+esc(admName)+' (administrador) puede cambiarlo.')+'</p>'+
    '<div class="field"><label for="tesMonth">Mes</label><input id="tesMonth" type="month" value="'+tk+'" min="'+MIN_FREE+'" max="'+shiftMonth(CUR,1)+'"></div>'+
-   '<div class="field"><label for="tes">Tesorero de '+monthName(tk)+'</label><select id="tes">'+'<option value="">Sin asignar</option>'+h.members.filter(x=>!x.leftAt||x.leftAt>=tk+'-01').map(x=>'<option value="'+x.id+'"'+(h.treasurer[tk]===x.id?' selected':'')+'>'+esc(x.name)+'</option>').join('')+'</select></div>'+tesLogHtml(h)+'</section>';
+   '<div class="field"><label for="tes">Tesorero de '+monthName(tk)+'</label><select id="tes"'+(adm?'':' disabled')+'>'+'<option value="">Sin asignar</option>'+h.members.filter(x=>!x.leftAt||x.leftAt>=tk+'-01').map(x=>'<option value="'+x.id+'"'+(h.treasurer[tk]===x.id?' selected':'')+'>'+esc(x.name)+'</option>').join('')+'</select></div>'+tesLogHtml(h)+'</section>';
   if(!CLOUD)html+='<section class="card"><h2>Mis datos de cobro</h2><div class="field"><label for="yape">Número Yape / Plin</label><input id="yape" inputmode="tel" value="'+esc(m.yape)+'" maxlength="15"></div><span class="err" id="yapeErr"></span><button class="btn" data-a="saveYape">Guardar número</button></section>';
-  html+='<section class="card"><h2>Convivientes</h2><div class="list">'+h.members.map(x=>'<div class="item"><div class="who-line">'+av(x.id,x.name)+'<div style="min-width:0"><b>'+esc(x.name)+'</b><div class="small muted">Ingresó el '+dmy(x.joinedAt)+(x.leftAt?' · salió el '+dmy(x.leftAt):'')+(CLOUD&&!x.userId?' · aún no entra a la app':'')+'</div></div></div>'+(x.leftAt?'<span class="pill neu">Ya no vive aquí</span>':'<button class="btn sec sm" data-a="askLeave" data-u="'+x.id+'">Registrar salida</button>')+'</div><div id="leave-'+x.id+'"></div>').join('')+'</div>'+
-   '<details><summary style="cursor:pointer;font-weight:600;color:var(--brand)">Agregar conviviente</summary><div style="display:flex;flex-direction:column;gap:10px;margin-top:10px">'+
+  html+='<section class="card"><h2>Convivientes</h2><div class="list">'+h.members.map(x=>{
+    const isOwner=CLOUD&&x.userId&&x.userId===h.owner;
+    const canLeave=!x.leftAt&&(CLOUD?(adm&&x.id!==m.id):true);
+    const canAdmin=CLOUD&&adm&&x.userId&&x.userId!==cs.user.id&&!x.leftAt;
+    return '<div class="item"><div class="who-line">'+av(x.id,x.name)+'<div style="min-width:0"><b>'+esc(x.name)+'</b>'+(isOwner?' <span class="pill neu">Administrador</span>':'')+'<div class="small muted">Ingresó el '+dmy(x.joinedAt)+(x.leftAt?' · salió el '+dmy(x.leftAt):'')+(CLOUD&&!x.userId&&!x.leftAt?' · aún no entra a la app':'')+'</div></div></div>'+
+     '<div class="acts">'+(x.leftAt?'<span class="pill neu">Ya no vive aquí</span>':'')+(canLeave?'<button class="btn sec sm" data-a="askLeave" data-u="'+x.id+'">Registrar salida</button>':'')+(canAdmin?'<button class="btn ghost sm" data-a="askMakeAdmin" data-u="'+x.id+'">Hacer administrador</button>':'')+'</div></div><div id="leave-'+x.id+'"></div>'}).join('')+'</div>'+
+   (adm?'<details><summary style="cursor:pointer;font-weight:600;color:var(--brand)">Agregar conviviente</summary><div style="display:flex;flex-direction:column;gap:10px;margin-top:10px">'+
    '<div class="field"><label for="nmName">Nombre</label><input id="nmName" maxlength="20"></div>'+
-   (CLOUD?'<span class="small muted">Luego esa persona crea su cuenta, toca «Unirme a un hogar» con el código <b>'+esc(h.code)+'</b> y elige su nombre.</span>':'<div class="field"><label for="nmPin">PIN de 4 dígitos</label><input id="nmPin" inputmode="numeric" maxlength="4"></div>')+
+   (CLOUD?'<span class="small muted">Luego esa persona entra con Google, toca «Unirme a un hogar» con el código <b>'+esc(h.code)+'</b>, elige su nombre y tú apruebas su solicitud.</span>':'<div class="field"><label for="nmPin">PIN de 4 dígitos</label><input id="nmPin" inputmode="numeric" maxlength="4"></div>')+
    '<div class="field"><label for="nmYape">Yape / Plin</label><input id="nmYape" inputmode="tel" maxlength="15"></div>'+
    '<div class="field"><label for="nmDate">Fecha de ingreso al hogar</label><input id="nmDate" type="date" value="'+iso(today)+'"></div>'+
-   '<span class="err" id="nmErr"></span><button class="btn" data-a="addMember">Agregar</button></div></details></section>';
+   '<span class="err" id="nmErr"></span><button class="btn" data-a="addMember">Agregar</button></div></details>':'<p class="small muted">Solo '+esc(admName)+' (administrador) agrega convivientes, registra salidas y aprueba a quien pide unirse.</p>')+'</section>';
   html+='<section class="card"><h2>Calidad</h2><p class="small muted">Pruebas automáticas y registro de pruebas manuales del plan de gestión de calidad.</p><button class="btn sec" data-a="tab" data-v="pruebas">Abrir pruebas de calidad</button></section>';
-  html+='<section class="card"><h2>'+(CLOUD?'Invitar y demo':'Sesión')+'</h2><p class="small muted">Código del hogar para invitar: <b class="num">'+esc(h.code)+'</b></p><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn sec" data-a="copy" data-v="'+esc(h.code)+'">Copiar código</button>'+(CLOUD?'':'<button class="btn sec" data-a="logout">Cerrar sesión</button>')+'</div>'+
-   (h.demo?'<div id="resetBox"><button class="btn danger" data-a="askReset">Restablecer datos de ejemplo</button></div>':'')+'</section>';
+  html+='<section class="card"><h2>Ayuda</h2><p class="small muted">Las 3 pantallas de bienvenida con lo básico de Roomly.</p><button class="btn sec" data-a="guide" data-v="0">Ver guía de inicio</button></section>';
+  html+='<section class="card"><h2>'+(CLOUD?'Invitar y demo':'Sesión')+'</h2><p class="small muted">Código del hogar para invitar: <b class="num">'+esc(h.code)+'</b>'+(CLOUD?'. Quien lo use tendrá que esperar la aprobación del administrador.':'')+'</p><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn sec" data-a="copy" data-v="'+esc(h.code)+'">Copiar código</button>'+(CLOUD?'':'<button class="btn sec" data-a="logout">Cerrar sesión</button>')+'</div>'+
+   (h.demo&&adm?'<div id="resetBox"><button class="btn danger" data-a="askReset">Restablecer datos de ejemplo</button></div>':'')+'</section>';
   return html;
+}
+const isAdmin=()=>!CLOUD||(home()&&cs.user&&home().owner===cs.user.id);
+const adminName=h=>{const o=CLOUD&&h.members.find(x=>x.userId&&x.userId===h.owner);return o?o.name:'el administrador'};
+function requestsCard(h){
+  return '<section class="card notice"><h2>Solicitudes para unirse</h2><div class="list">'+h.requests.map(r=>'<div class="item"><div style="min-width:0;flex:1"><b>'+esc(r.name)+'</b><div class="small muted">'+esc(r.email||'')+' · '+(r.member_id?'quiere entrar como <b>'+esc(memberById(h,r.member_id).name)+'</b>':'persona nueva en el hogar')+(r.yape?' · Yape '+esc(r.yape):'')+'</div></div><div class="acts"><button class="btn sm" data-a="approveReq" data-u="'+esc(r.user_id)+'">Aprobar</button><button class="btn ghost sm" data-a="askRejectReq" data-u="'+esc(r.user_id)+'">Rechazar</button></div></div>').join('')+
+   '</div><p class="small muted">Aprueba solo a personas que conoces: verán los gastos y números de Yape del hogar.</p></section>';
 }
 
 /* ===================== Pruebas de calidad ===================== */
@@ -526,6 +547,13 @@ async function runTests(){
   tryT('TurnoSalio',()=>{const h=fx();h.members[2].leftAt='2026-11-10';const p=(payer,day)=>h.expenses.push(E({type:'puntual',amount:1000,date:'2026-11-'+day,payer,creditor:payer,participants:activeOn(h,'2026-11-'+day)}));
     ['03','05','12','15'].forEach(d=>p('a',d));['04','13','16'].forEach(d=>p('b',d));const s=equity(h,'2026-11',t30).suggest.map(r=>r.name).join(' y ');
     add('La sugerencia de turno no incluye a quien ya salió',s==='Beto','Caro salió el 10/11 sin compras; Ana compró 4 veces y Beto 3. Le toca a Beto, no a Caro.','Beto',s||'ninguno');});
+  if(CLOUD&&home()){
+    const rt=[];for(let i=0;i<5;i++){const t0=performance.now();try{await fetchHome(home().code);rt.push(performance.now()-t0)}catch(e){rt.push(NaN)}}
+    const okR=rt.every(x=>x<2000), avgR=rt.reduce((a,b)=>a+b,0)/rt.length;
+    add('Tiempo de lectura desde el servidor',okR,'Se pide 5 veces el hogar completo a Supabase desde este equipo y se mide cuánto tarda en llegar, incluyendo internet.','menos de 2 segundos en cada repetición',rt.some(isNaN)?'sin conexión en alguna repetición':'promedio '+avgR.toFixed(0)+' ms; máximo '+Math.max(...rt).toFixed(0)+' ms');
+    const st=cs.syncTimes||[];
+    if(st.length)add('Tiempo de guardado en el servidor',st.every(x=>x<2000),'Tiempo que tardaron en guardarse en Supabase los últimos '+st.length+' cambios hechos desde este equipo.','menos de 2 segundos cada uno','promedio '+(st.reduce((a,b)=>a+b,0)/st.length).toFixed(0)+' ms; máximo '+Math.max(...st).toFixed(0)+' ms');
+  }
   /* Tiempo de respuesta real: se pinta el dashboard en pantalla 5 veces y se mide hasta el siguiente cuadro */
   const keep=ui.tab, times=[];
   for(let i=0;i<5;i++){ui.tab='inicio';const t0=performance.now();render();await raf();times.push(performance.now()-t0);}
@@ -550,7 +578,7 @@ const REQS=[
   ['RC2','Consistencia del indicador de equidad frente a escenarios de empate, hogar nuevo y conviviente incorporado con historial previo.'],
   ['RC3','Tiempo de respuesta del dashboard verificado bajo un umbral definido en el plan de gestión de calidad del proyecto.'],
 ];
-const REQ_AUTO={'Alta de usuario':'RNF2','Gasto fijo en partes iguales':'RF1, RC1','Gasto puntual con deuda directa':'RF2, RF3','Empate en sugerencia de turno':'RF3, RC2','Hogar nuevo sin compras':'RC2','Conviviente incorporado a mitad de mes':'RC2','Compra menor al mínimo no suma al indicador':'RF3','Gasto anulado sale del balance y del indicador':'RF6','Cambio de tesorero no altera cuotas ya registradas':'RF1','Conviviente que sale del hogar':'RF1, RC2','El céntimo sobrante lo asume quien cobra':'RC1','Pocas compras no activan la alerta':'RF4','Máximo un aporte por persona por día':'RF3','Compra para parte del hogar no suma al indicador':'RF3','No se anula un gasto con pagos confirmados':'RF5','Pago avisado y confirmado':'RF5','El tesorero corrige gastos de quien ya salió':'RF6','La sugerencia de turno no incluye a quien ya salió':'RF3','Tiempo de respuesta del dashboard':'RNF1, RC3'};
+const REQ_AUTO={'Alta de usuario':'RNF2','Gasto fijo en partes iguales':'RF1, RC1','Gasto puntual con deuda directa':'RF2, RF3','Empate en sugerencia de turno':'RF3, RC2','Hogar nuevo sin compras':'RC2','Conviviente incorporado a mitad de mes':'RC2','Compra menor al mínimo no suma al indicador':'RF3','Gasto anulado sale del balance y del indicador':'RF6','Cambio de tesorero no altera cuotas ya registradas':'RF1','Conviviente que sale del hogar':'RF1, RC2','El céntimo sobrante lo asume quien cobra':'RC1','Pocas compras no activan la alerta':'RF4','Máximo un aporte por persona por día':'RF3','Compra para parte del hogar no suma al indicador':'RF3','No se anula un gasto con pagos confirmados':'RF5','Pago avisado y confirmado':'RF5','El tesorero corrige gastos de quien ya salió':'RF6','La sugerencia de turno no incluye a quien ya salió':'RF3','Tiempo de respuesta del dashboard':'RNF1, RC3','Tiempo de lectura desde el servidor':'RNF1, RC3','Tiempo de guardado en el servidor':'RNF1, RC3'};
 const MANUAL=[
   CLOUD?{id:'M1',name:'Alta de usuario',req:'RNF2',steps:'En otro celular: tocar «Continuar con Google», elegir una cuenta de Gmail, escribir nombre y Yape, tocar «Unirme a un hogar» con el código y entrar. Luego cerrar sesión y volver a abrir la app.',exp:'La persona aparece en Ajustes → Convivientes en todos los celulares. Sin iniciar sesión con Google no se ve ningún dato del hogar.',crit:'Entra con su Google y, sin sesión, no accede a los datos (2 de 2).'}
        :{id:'M1',name:'Alta de usuario',req:'RNF2',steps:'Ajustes → Agregar conviviente: nombre "Prueba", PIN 1234, Yape 900000000. Cerrar sesión y entrar como Prueba con su PIN.',exp:'Prueba aparece en la lista de convivientes y entra con su PIN; con un PIN incorrecto se muestra "PIN incorrecto".',crit:'Entra con el PIN correcto y se rechaza el incorrecto (2 de 2).'},
@@ -559,7 +587,9 @@ const MANUAL=[
   {id:'M4',name:'Empate en sugerencia de turno',req:'RF3, RC2',steps:'Registrar compras hasta que dos personas tengan el mismo número más bajo de compras. Ir a Equidad.',exp:'La sugerencia de turno muestra a las dos personas empatadas ("le toca a X o Y").',crit:'Aparecen los 2 nombres empatados.'},
   {id:'M5',name:'Tiempo de respuesta',req:'RNF1, RC3',steps:'En un celular, registrar un gasto y cronometrar desde que se toca "Guardar gasto" hasta ver el dashboard actualizado. Repetir 5 veces y anotar los tiempos, el modelo del celular y si se usó wifi o datos.',exp:'Cada repetición tarda menos de 2 segundos.',crit:'Menos de 2 s en 5 de 5 repeticiones.'},
   {id:'M6',name:'Confirmación de pago',req:'RF5',steps:'Fernando, en su Inicio, toca «Ya pagué» en un pago a Gustavo. Luego Gustavo, en «Te deben», toca «Confirmar».',exp:'Para Fernando el pago queda «Por confirmar»; cuando Gustavo confirma, pasa a pagado y sale de lo pendiente.',crit:'Los 3 estados se muestran bien: pendiente, por confirmar y pagado.'},
-].concat(CLOUD?[{id:'M7',name:'Actualización entre celulares',req:'RNF1',steps:'Con dos celulares abiertos en el mismo hogar, registrar un gasto en uno y mirar el otro sin recargar. Repetir 3 veces.',exp:'El gasto aparece en el otro celular sin recargar la página.',crit:'Aparece en menos de 5 s en 3 de 3 repeticiones.'}]:[]);
+].concat([
+  ['M8','Android · Chrome'],['M9','Android · app instalada'],['M10','iPhone · Safari'],['M11','iPhone · app en la pantalla de inicio'],['M12','Computadora · navegador']
+].map(([id,d])=>({id,name:'Compatibilidad: '+d,req:'RNF3',steps:'Abrir Roomly en '+d+', '+(CLOUD?'entrar con Google, ':'entrar con el PIN, ')+'registrar una compra, revisar Inicio y Equidad y cerrar sesión. En la observación anotar el modelo del equipo y la versión del sistema.',exp:'Todo se ve completo, sin textos cortados, y las 4 acciones funcionan.',crit:'4 de 4 acciones sin errores.'}))).concat(CLOUD?[{id:'M7',name:'Actualización entre celulares',req:'RNF1',steps:'Con dos celulares abiertos en el mismo hogar, registrar un gasto en uno y mirar el otro sin recargar. Repetir 3 veces.',exp:'El gasto aparece en el otro celular sin recargar la página.',crit:'Aparece en menos de 5 s en 3 de 3 repeticiones.'}]:[]);
 function viewPruebas(){
   const h=home(); h.manual=h.manual||{};
   let html='<section class="card"><div class="row"><h2>Pruebas de calidad</h2><button class="btn ghost sm" data-a="tab" data-v="ajustes">‹ Ajustes</button></div><p class="small muted">Pruebas automáticas de los cálculos. Usan datos de prueba aparte: no modifican el hogar.</p><button class="btn" data-a="runTests">Ejecutar pruebas automáticas</button></section>';
@@ -694,10 +724,12 @@ function openForm(editId){
     const f=document.getElementById('expForm');
     /* gasto fijo: si el mes no tiene tesorero, se elige en el mismo formulario */
     const tesUpd=()=>{const box=document.getElementById('tesField');if(!box)return;const k=monthOf(document.getElementById('fDate').value||iso(today));
+      if(!h.treasurer[k]&&!isAdmin()){box.innerHTML='<div class="alert bad small">'+monthName(k)+' todavía no tiene tesorero. Pídele a '+esc(adminName(h))+' (administrador) que lo asigne en Ajustes.</div>';return}
       box.innerHTML=h.treasurer[k]?'<span class="small muted">Cobra el tesorero de '+monthName(k)+': <b>'+esc(memberById(h,h.treasurer[k]).name)+'</b>.</span>':'<label for="fTes">Tesorero de '+monthName(k)+' (obligatorio)</label><select id="fTes"><option value="">Elige al tesorero</option>'+h.members.filter(x=>activeOn(h,k+'-01').includes(x.id)||isActive(x,iso(today))).map(x=>'<option value="'+x.id+'">'+esc(x.name)+'</option>').join('')+'</select><span class="small muted">El hogar todavía no registra tesorero para ese mes.</span>';};
     tesUpd(); document.getElementById('fDate').addEventListener('change',tesUpd);
     f.querySelectorAll('input,select').forEach(i=>i.addEventListener('input',()=>document.getElementById('fErr').textContent=''));
     f.onsubmit=ev=>{ev.preventDefault();
+      if(isOffline())return document.getElementById('fErr').textContent='Sin conexión: conéctate a internet para guardar el gasto.';
       const err=t=>document.getElementById('fErr').textContent=t;
       const cat=document.getElementById('fCat').value;
       const descEl=document.getElementById('fDesc'); const desc=descEl?descEl.value.trim():cat;
@@ -721,6 +753,7 @@ function openForm(editId){
           const k=monthOf(date);
           const dup=h.expenses.find(x=>x.type==='fijo'&&!x.void&&x.cat===cat&&monthOf(x.date)===k);
           if(dup)return err('Ya hay un gasto fijo de '+cat+' en '+monthName(k)+' ('+fmt(dup.amount)+'). Si el monto está mal, edítalo o anúlalo desde Gastos.');
+          if(!h.treasurer[k]&&!isAdmin())return err(monthName(k)+' no tiene tesorero. Pídele a '+adminName(h)+' que lo asigne.');
           if(!h.treasurer[k]){const t=document.getElementById('fTes');if(!t||!t.value)return err('Elige al tesorero de '+monthName(k)+' antes de guardar.');setTreasurer(h,k,t.value,m.id);}
           const ps=activeOn(h,date); if(ps.length<2)return err('Se necesitan al menos 2 convivientes activos en esa fecha.');
           if(!ps.includes(h.treasurer[k]))return err('El tesorero de ese mes no vive en el hogar en esa fecha. Cámbialo en Ajustes.');
@@ -773,7 +806,7 @@ function renderLogin(){
     pf.onsubmit=e=>{e.preventDefault();const id=document.getElementById('lWho').value;const mm=h.members.find(x=>x.id===id);L.who=id;
       if(!/^\d{4}$/.test(pin.value))return document.getElementById('pErr').textContent='El PIN tiene 4 números.';
       if(mm.pin!==pin.value)return document.getElementById('pErr').textContent='PIN incorrecto. Inténtalo de nuevo.';
-      store.session={code:h.code,memberId:id};save();ui.tab='inicio';ui.month=CUR;render();}}
+      store.session={code:h.code,memberId:id};save();ui.tab='inicio';ui.month=CUR;render();maybeGuide();}}
   const crf=document.getElementById('createForm');
   if(crf)crf.onsubmit=e=>{e.preventDefault();const v=id=>document.getElementById(id).value.trim();const err=t=>document.getElementById('cErr').textContent=t;
     if(!v('cHome'))return err('Ponle un nombre al hogar.');
@@ -835,8 +868,11 @@ const AUTH_GOOGLE=true;   /* true: se entra con Google; false: correo y contrase
 const meta=()=>(cs.user&&cs.user.user_metadata)||{};
 const profName=()=>meta().roomly_name||'';
 const profYape=()=>meta().roomly_yape||'';
+const consentOk=()=>!!(meta().roomly_consent&&meta().roomly_consent.version>=1);
 const googleIcon='<svg width="18" height="18" viewBox="0 0 48 48" aria-hidden="true"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34.1 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.4-.4-3.5z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34.1 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-8l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.4-.4-3.5z"/></svg>';
+const isIOSApp=()=>/iPhone|iPad|iPod/.test(navigator.userAgent)&&(navigator.standalone===true||matchMedia('(display-mode: standalone)').matches);
 async function googleLogin(btn){
+  if(isOffline())return toast('Sin conexión. Conéctate a internet para entrar.');
   if(btn)btn.disabled=true; cs.msg='';
   try{const {error}=await sb.auth.signInWithOAuth({provider:'google',options:{redirectTo:location.origin+location.pathname,queryParams:{prompt:'select_account'}}});if(error)throw error}
   catch(e){cs.msg=errText(e);renderCloud()}
@@ -853,8 +889,11 @@ function bindProfile(formId,errId,done){
     const name=document.getElementById('pName').value.trim().replace(/\s+/g,' '), yape=document.getElementById('pYape').value.trim(), err=t=>document.getElementById(errId).textContent=t;
     if(!name)return err('Escribe tu nombre.');
     if(!/^[\d ]{6,15}$/.test(yape))return err('Escribe un número de Yape o Plin válido.');
+    const ok=document.getElementById('pOk');
+    if(ok&&!ok.checked)return err('Para usar Roomly tienes que aceptar el aviso de privacidad.');
     const b=f.querySelector('button[type=submit]');b.disabled=true;
-    try{const {data,error}=await sb.auth.updateUser({data:{roomly_name:name,roomly_yape:yape}});if(error)throw error;
+    const upd={roomly_name:name,roomly_yape:yape}; if(ok)upd.roomly_consent={version:1,at:new Date().toISOString()};
+    try{const {data,error}=await sb.auth.updateUser({data:upd});if(error)throw error;
       if(data&&data.user)cs.user=data.user; await done(name,yape);
     }catch(e){b.disabled=false;err(errText(e))}
   };
@@ -869,29 +908,33 @@ function showNewPass(){leaveHome();cs.view='newpass';renderCloud()}
 async function afterAuth(){
   leaveHome();
   if(!cs.user){cs.view='auth';renderCloud();return}
-  if(!profName()){cs.view='profile';renderCloud();return}
+  if(!profName()||!consentOk()){cs.view='profile';renderCloud();return}
   await listMyHomes();
   const last=lsGet(LAST);
-  const pick=cs.homes.find(x=>x.code===last)||(cs.homes.length===1?cs.homes[0]:null);
+  const act=cs.homes.filter(x=>x.status==='active');
+  const lastH=cs.homes.find(x=>x.code===last);
+  if(lastH&&lastH.status==='pending'){showWaiting(lastH);return}
+  const pick=(lastH&&lastH.status==='active'?lastH:null)||(act.length===1?act[0]:null);
   if(pick)await openHome(pick.code);else{cs.view='homes';renderCloud()}
 }
 async function listMyHomes(){
-  const {data,error}=await sb.from('members').select('home_code,id,name,homes(name)').eq('user_id',cs.user.id);
-  cs.homes=error?[]:data.map(r=>({code:r.home_code,member:r.name,name:r.homes?r.homes.name:r.home_code}));
+  const {data,error}=await sb.rpc('my_homes');
+  cs.homes=error||!data?[]:data;
 }
 function leaveHome(){if(cs.chan&&sb){sb.removeChannel(cs.chan);cs.chan=null}store={homes:{},session:null};cs.base=null;closeSheet()}
 
 /* ---- lectura del hogar ---- */
 async function fetchHome(code){
-  const [hr,mr,er]=await Promise.all([
-    sb.from('homes').select('code,name,demo,treasurer,tes_log,manual').eq('code',code).maybeSingle(),
+  const [hr,mr,er,rq]=await Promise.all([
+    sb.from('homes').select('code,name,demo,treasurer,tes_log,manual,owner').eq('code',code).maybeSingle(),
     sb.from('members').select('id,user_id,name,yape,joined_at,left_at').eq('home_code',code),
-    sb.from('expenses').select('id,data,rev').eq('home_code',code)]);
+    sb.from('expenses').select('id,data,rev').eq('home_code',code),
+    sb.from('join_requests').select('user_id,member_id,name,yape,email,created_at').eq('home_code',code)]);
   const err=hr.error||mr.error||er.error; if(err)throw err;
   if(!hr.data)return null;
   const r=hr.data, revs={};
   er.data.forEach(x=>revs[x.id]=x.rev);
-  const h={code:r.code,name:r.name,demo:r.demo,treasurer:r.treasurer||{},tesLog:r.tes_log||[],manual:r.manual||{},
+  const h={code:r.code,name:r.name,demo:r.demo,owner:r.owner||null,requests:rq.error?[]:(rq.data||[]),treasurer:r.treasurer||{},tesLog:r.tes_log||[],manual:r.manual||{},
     members:mr.data.map(m=>({id:m.id,name:m.name,yape:m.yape,joinedAt:m.joined_at,leftAt:m.left_at||null,userId:m.user_id||null}))
       .sort((a,b)=>a.joinedAt.localeCompare(b.joinedAt)||a.name.localeCompare(b.name)),
     expenses:er.data.map(x=>Object.assign({},x.data,{id:x.id}))};
@@ -906,7 +949,7 @@ async function openHome(code){
     const mine=r&&r.h.members.find(m=>m.userId===cs.user.id);
     if(!mine){lsSet(LAST,null);await listMyHomes();cs.view='homes';renderCloud();return}
     store={homes:{[code]:r.h},session:{code,memberId:mine.id}};snap(r.h,r.revs);lsSet(LAST,code);
-    ui.tab='inicio';ui.month=CUR;ui.filter='todos';subscribe(code);render();
+    ui.tab='inicio';ui.month=CUR;ui.filter='todos';subscribe(code);render();maybeGuide();
   }catch(e){toastErr(e);cs.view='homes';renderCloud()}
 }
 
@@ -918,22 +961,23 @@ function subscribe(code){
     .on('postgres_changes',{event:'*',schema:'public',table:'expenses',filter:'home_code=eq.'+code},on)
     .on('postgres_changes',{event:'*',schema:'public',table:'members',filter:'home_code=eq.'+code},on)
     .on('postgres_changes',{event:'*',schema:'public',table:'homes',filter:'code=eq.'+code},on)
+    .on('postgres_changes',{event:'*',schema:'public',table:'join_requests',filter:'home_code=eq.'+code},on)
     .subscribe();
 }
 let refreshT=null;
 function scheduleRefresh(){clearTimeout(refreshT);refreshT=setTimeout(refresh,250)}
 async function refresh(){
   const h=home(); if(!CLOUD||!h||!cs.user)return;
-  await syncChain; if(dirty){scheduleRefresh();return}
+  await syncChain; if(dirty){if(!cs.netFail)scheduleRefresh();return}
   try{
     const r=await fetchHome(h.code); if(dirty||home()!==h)return;
     if(!r)return afterAuth();
     const mine=r.h.members.find(m=>m.userId===cs.user.id); if(!mine)return afterAuth();
     /* se actualiza en el mismo objeto para no perder lo que esté abierto en pantalla */
-    Object.assign(h,{name:r.h.name,demo:r.h.demo,treasurer:r.h.treasurer,tesLog:r.h.tesLog,manual:r.h.manual});
+    Object.assign(h,{owner:r.h.owner,requests:r.h.requests,name:r.h.name,demo:r.h.demo,treasurer:r.h.treasurer,tesLog:r.h.tesLog,manual:r.h.manual});
     const mm=new Map(h.members.map(m=>[m.id,m])); h.members=r.h.members.map(m=>mm.has(m.id)?fill(mm.get(m.id),m):m);
     const em=new Map(h.expenses.map(e=>[e.id,e])); h.expenses=r.h.expenses.map(e=>em.has(e.id)?fill(em.get(e.id),e):e);
-    store.session.memberId=mine.id; snap(h,r.revs); softRender();
+    store.session.memberId=mine.id; snap(h,r.revs); if(cs.netFail){cs.netFail=false;netBar()} softRender();
   }catch(e){}
 }
 const typing=()=>{const a=document.activeElement;return a&&$app.contains(a)&&/INPUT|SELECT|TEXTAREA/.test(a.tagName)};
@@ -954,11 +998,25 @@ function merge3(b,l,r){
   return o;
 }
 let syncChain=Promise.resolve(), dirty=false;
-function cloudSave(){dirty=true;syncChain=syncChain.then(doSync).catch(e=>{toast('No se pudo guardar el último cambio. '+errText(e));scheduleRefresh()})}
+function cloudSave(){dirty=true;syncChain=syncChain.then(doSync).catch(e=>{
+  if(/fetch|network|Failed to/i.test(String(e&&e.message||e))){dirty=true;cs.netFail=true;netBar();toast('Sin conexión: el cambio se guardará cuando vuelva el internet.');return}
+  toast('No se pudo guardar el último cambio. '+errText(e));
+  scheduleRefresh()})}
+const isOffline=()=>CLOUD&&(navigator.onLine===false||!!cs.netFail);
+function netBar(){
+  if(!CLOUD)return;
+  let b=document.getElementById('netbar');
+  if(!b){b=document.createElement('div');b.id='netbar';b.setAttribute('role','status');b.style.cssText='position:fixed;left:0;right:0;top:0;z-index:60;padding:calc(env(safe-area-inset-top,0px) + 8px) 16px 8px;background:var(--danger);color:#fff;font-size:13px;font-weight:600;text-align:center';document.body.appendChild(b)}
+  b.textContent=dirty?'Sin conexión: tu último cambio se enviará cuando vuelva el internet. No cierres la app.':'Sin conexión: no se pueden registrar cambios hasta que vuelva el internet.';
+  b.hidden=!isOffline();
+}
+addEventListener('online',()=>{cs.netFail=false;netBar();if(!home())return;if(dirty)cloudSave();else scheduleRefresh()});
+setInterval(()=>{if(CLOUD&&cs.netFail&&dirty&&navigator.onLine!==false&&home()){cs.netFail=false;netBar();cloudSave()}},15000);
+addEventListener('offline',netBar);
 async function doSync(){
   if(!dirty)return; dirty=false;
   const h=home(); if(!h||!cs.base)return;
-  const code=h.code, B=cs.base; let changed=false;
+  const code=h.code, B=cs.base; let changed=false; const t0=performance.now(); let wrote=false;
   const hl=homeFields(h);
   if(!same(hl,B.home)){
     const {data:r,error}=await sb.from('homes').select('name,treasurer,tes_log,manual').eq('code',code).single(); if(error)throw error;
@@ -995,6 +1053,8 @@ async function doSync(){
       remote=r.data; rev=r.rev;
     }
   }
+  wrote=true; (cs.syncTimes=cs.syncTimes||[]).push(performance.now()-t0); if(cs.syncTimes.length>10)cs.syncTimes.shift();
+  if(cs.netFail){cs.netFail=false;netBar()}
   if(changed)softRender();
 }
 
@@ -1004,9 +1064,12 @@ function renderCloud(){
   if(V==='auth'&&AUTH_GOOGLE){
     html+='<section class="card"><h2>Entra a Roomly</h2><p class="small muted">Usa tu cuenta de Google (Gmail). No necesitas crear otra contraseña.</p>'+
      (cs.msg?'<span class="err" role="alert">'+esc(cs.msg)+'</span>':'')+
-     '<button class="btn block" data-a="cGoogle" style="background:#fff;color:#1f1f1f;border:1px solid #dadce0;display:flex;align-items:center;justify-content:center;gap:10px">'+googleIcon+'Continuar con Google</button></section>';
+     '<button class="btn block" data-a="cGoogle" style="background:#fff;color:#1f1f1f;border:1px solid #dadce0;display:flex;align-items:center;justify-content:center;gap:10px">'+googleIcon+'Continuar con Google</button>'+
+     (isIOSApp()?'<p class="small muted">En iPhone: si después de elegir tu cuenta de Google no vuelves a Roomly, abre la app desde Safari.</p>':'')+
+     '<button class="btn ghost sm" data-a="privacy">Aviso de privacidad</button></section>';
   }else if(V==='profile'){
-    html+='<form class="card" id="profForm" novalidate><h2>¿Cómo te llamas?</h2><p class="small muted">Así te verán tus roommates en Roomly. Puedes cambiarlo después en Ajustes.</p>'+profileForm('profForm','prErr')+
+    html+='<form class="card" id="profForm" novalidate><h2>'+(profName()?'Antes de seguir':'¿Cómo te llamas?')+'</h2><p class="small muted">'+(profName()?'Revisa tus datos y acepta el aviso de privacidad para seguir usando Roomly.':'Así te verán tus roommates en Roomly. Puedes cambiarlo después en Ajustes.')+'</p>'+profileForm('profForm','prErr')+
+     '<label class="small" style="display:flex;gap:8px;align-items:flex-start"><input type="checkbox" id="pOk" style="margin-top:3px"><span>Leí y acepto el <a href="#" data-a="privacy" style="color:var(--brand);font-weight:600">aviso de privacidad</a>: Roomly guarda mi nombre, mi correo, mi número de Yape y los gastos que registro, y solo los ven los convivientes de mis hogares.</span></label>'+
      '<button class="btn block" type="submit">Continuar</button><p class="small muted" style="text-align:center">Conectado como '+esc(cs.user.email||'')+'</p><button type="button" class="btn ghost" data-a="cLogout">No soy yo, salir</button></form>';
   }else if(V==='auth'){
     const reg=cs.authMode==='signup';
@@ -1024,14 +1087,19 @@ function renderCloud(){
   }else if(V==='newpass'){
     html+='<form class="card" id="npForm" novalidate><h2>Crea tu nueva contraseña</h2><p class="small muted">Cuenta: <b>'+esc(cs.user?cs.user.email:'')+'</b></p>'+passFields()+'<span class="err" id="npErr" role="alert"></span><button class="btn block" type="submit">Guardar y entrar</button></form>';
   }else if(V==='homes'){
-    html+='<p style="margin:0 0 4px"><b>Hola, '+esc(profName())+'</b> <button class="btn ghost sm" data-a="cProfile">Editar</button></p>'+(cs.homes.length?'<section class="card"><h2>Tus hogares</h2><div class="list">'+cs.homes.map(x=>'<div class="item"><div style="min-width:0"><b>'+esc(x.name)+'</b><div class="small muted">Código '+esc(x.code)+' · entras como '+esc(x.member)+'</div></div><button class="btn sm" data-a="cOpen" data-v="'+esc(x.code)+'">Entrar</button></div>').join('')+'</div></section>':'')+
+    html+='<p style="margin:0 0 4px"><b>Hola, '+esc(profName())+'</b> <button class="btn ghost sm" data-a="cProfile">Editar</button></p>'+(cs.homes.length?'<section class="card"><h2>Tus hogares</h2><div class="list">'+cs.homes.map(x=>'<div class="item"><div style="min-width:0"><b>'+esc(x.name)+'</b>'+(x.admin?' <span class="pill neu">Administrador</span>':'')+'<div class="small muted">Código '+esc(x.code)+' · '+(x.status==='pending'?'esperando aprobación':'entras como '+esc(x.member))+'</div></div>'+(x.status==='pending'?'<button class="btn sec sm" data-a="cWaitOpen" data-v="'+esc(x.code)+'">Ver</button>':'<button class="btn sm" data-a="cOpen" data-v="'+esc(x.code)+'">Entrar</button>')+'</div>').join('')+'</div></section>':'')+
      '<form class="card" id="joinForm" novalidate><h2>Unirme a un hogar</h2><p class="small muted">Pídele el código a quien creó el hogar.</p><div class="field"><label for="jCode">Código del hogar</label><input id="jCode" autocapitalize="characters" maxlength="8" placeholder="Ej.: RMAB12"></div><span class="err" id="jErr" role="alert"></span><button class="btn block" type="submit">Buscar hogar</button></form>'+
      '<section class="card"><h2>Crear un hogar</h2><p class="small muted">Serás el primer conviviente y el tesorero de este mes. Luego compartes el código con tus roommates.</p><button class="btn sec block" data-a="cCreate">Crear hogar</button></section>'+
      '<p class="small muted" style="text-align:center">Conectado como '+esc(cs.user.email||'')+'</p><button class="btn ghost" data-a="cLogout">Cerrar sesión</button>';
+  }else if(V==='waiting'){
+    const w=cs.waiting;
+    html+='<section class="card"><h2>Solicitud enviada</h2><p>Pediste unirte a <b>'+esc(w.name)+'</b>. Cuando '+esc(w.admin||'el administrador')+' la apruebe, podrás entrar.</p><p class="small muted">Esta pantalla se revisa sola cada pocos segundos.</p>'+
+     '<button class="btn block" data-a="cWaitCheck">Revisar ahora</button><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn ghost" data-a="cBack">Mis hogares</button><button class="btn ghost" data-a="cCancelReq">Cancelar solicitud</button></div></section>';
   }else if(V==='join'){
     const p=cs.preview, free=p.members.filter(x=>!x.claimed&&!x.left);
     html+='<form class="card" id="claimForm" novalidate><div class="row"><h2>'+esc(p.name)+'</h2><button type="button" class="btn ghost sm" data-a="cBack">Volver</button></div>'+
      '<div class="field"><label for="jWho">¿Quién eres?</label><select id="jWho">'+free.map(x=>'<option value="'+esc(x.id)+'">'+esc(x.name)+'</option>').join('')+'<option value="">Soy nuevo: entrar como '+esc(profName())+'</option></select></div>'+
+     '<p class="small muted">'+esc(p.admin||'El administrador')+' tiene que aprobar tu ingreso.</p>'+
      '<span class="small muted">Si eliges un nombre de la lista, entras en su lugar y se usa tu número de Yape.</span>'+
      '<span class="err" id="jErr2" role="alert"></span><button class="btn block" type="submit">Unirme</button></form>';
   }else if(V==='create'){
@@ -1078,6 +1146,7 @@ function renderCloud(){
     try{const {data,error}=await sb.rpc('home_preview',{p_code:code}); if(error)throw error;
       if(!data){busy(jf,false);return err('No encontramos un hogar con ese código.')}
       if(data.is_member)return openHome(data.code);
+      if(data.pending)return showWaiting({code:data.code,name:data.name,admin:data.admin});
       cs.preview=data; cs.view='join'; renderCloud();
     }catch(e){busy(jf,false);err(errText(e))}
   };
@@ -1087,9 +1156,9 @@ function renderCloud(){
   if(cf)cf.onsubmit=async ev=>{ev.preventDefault();
     const err=t=>document.getElementById('jErr2').textContent=t, id=who.value||null;
     busy(cf,true);
-    try{const {data:mid,error}=await sb.rpc('join_home',{p_code:cs.preview.code,p_member_id:id,p_name:id?null:profName(),p_yape:id?null:profYape(),p_joined:iso(today)}); if(error)throw error;
-      if(id&&profYape())await sb.from('members').update({yape:profYape()}).eq('home_code',cs.preview.code).eq('id',mid||id);
-      await listMyHomes(); await openHome(cs.preview.code); toast('Listo, ya estás en '+cs.preview.name);
+    try{const {data:st,error}=await sb.rpc('join_home',{p_code:cs.preview.code,p_member_id:id,p_name:id?null:profName(),p_yape:profYape(),p_joined:iso(today)}); if(error)throw error;
+      if(st==='active'){await listMyHomes();await openHome(cs.preview.code);return}
+      lsSet(LAST,cs.preview.code); showWaiting({code:cs.preview.code,name:cs.preview.name,admin:cs.preview.admin});
     }catch(e){busy(cf,false);err(errText(e))}
   };
   const demo=document.getElementById('cDemo');
@@ -1147,10 +1216,58 @@ async function cloudResetDemo(){
   await refresh(); ui.month=CUR; ui.tab='inicio'; render(); toast('Datos de ejemplo actualizados para todos');
 }
 
+const WRITE_ACTIONS=new Set(['new','edit','askVoid','doVoid','pay','toggle','claim','reject','saveYape','addMember','askLeave','doLeave','askReset','doReset','manual','cProfile','approveReq','doRejectReq','doMakeAdmin','doLeaveHome','doDelete','cCreate']);
+async function adminRpc(fn,args,ok){
+  try{const {error}=await sb.rpc(fn,args);if(error)throw error;await refresh();toast(ok)}catch(e){toastErr(e)}
+}
+function showWaiting(w){leaveHome();cs.waiting=w;cs.view='waiting';renderCloud();clearInterval(cs.waitT);cs.waitT=setInterval(()=>{if(cs.view==='waiting'&&!document.hidden)checkWaiting(false);else if(cs.view!=='waiting')clearInterval(cs.waitT)},8000)}
+async function checkWaiting(manual){
+  await listMyHomes();
+  const x=cs.homes.find(y=>y.code===cs.waiting.code);
+  if(x&&x.status==='active'){clearInterval(cs.waitT);toast('¡Te aprobaron! Bienvenido a '+x.name);return openHome(x.code)}
+  if(!x){clearInterval(cs.waitT);lsSet(LAST,null);cs.view='homes';renderCloud();return toast('Tu solicitud fue rechazada o cancelada')}
+  if(manual)toast('Todavía no te aprueban');
+}
+async function cancelRequest(){
+  try{const {error}=await sb.rpc('cancel_request',{p_code:cs.waiting.code});if(error)throw error;clearInterval(cs.waitT);lsSet(LAST,null);await cloudGoHomes();toast('Solicitud cancelada')}catch(e){toastErr(e)}
+}
+async function leaveThisHome(){
+  const h=home();
+  try{await syncChain;const {error}=await sb.rpc('leave_home',{p_code:h.code,p_today:iso(today)});if(error)throw error;await cloudGoHomes();toast('Saliste de '+h.name)}catch(e){toastErr(e)}
+}
+async function deleteAccount(){
+  try{await syncChain;const {error}=await sb.rpc('delete_my_account',{p_today:iso(today)});if(error)throw error;
+    leaveHome_local();await cloudLogout();toast('Tu cuenta y tus datos personales fueron eliminados')}catch(e){toastErr(e)}
+}
+function leaveHome_local(){lsSet(LAST,null);try{localStorage.removeItem(GUIDE_KEY)}catch(e){}}
+const PRIVACY_HTML='<p><b>Aviso de privacidad de Roomly</b> (versión 1, '+MESES[10]+' de 2026). Roomly es un producto mínimo viable desarrollado por estudiantes de la UPC para el curso Gestión de Costos y Calidad. Cumplimos la Ley N.° 29733, Ley de Protección de Datos Personales.</p>'+
+ '<p><b>Qué datos guardamos:</b> tu nombre, el correo de tu cuenta de Google, tu número de Yape o Plin y los gastos, pagos y pruebas que registras en tus hogares.</p>'+
+ '<p><b>Para qué:</b> dividir los gastos del hogar, mostrar a quién y cuánto pagar, avisar pagos pendientes y calcular el indicador de equidad. No los usamos para publicidad ni los vendemos o compartimos con otras empresas.</p>'+
+ '<p><b>Quién los ve:</b> solo los convivientes aprobados de cada hogar al que perteneces. El equipo del proyecto puede acceder a la base de datos solo para dar soporte técnico.</p>'+
+ '<p><b>Dónde se guardan:</b> en Supabase, un servicio en la nube con servidores en Estados Unidos. El ingreso lo hace Google: Roomly nunca ve tu contraseña.</p>'+
+ '<p><b>Cuánto tiempo:</b> mientras tengas tu cuenta. Si sales de un hogar, tu nombre queda en los gastos que ya existían para no descuadrar las cuentas de los demás.</p>'+
+ '<p><b>Tus derechos:</b> puedes ver y corregir tus datos en Ajustes → Editar mi perfil, salir de un hogar y eliminar tu cuenta y tus datos en Ajustes → Privacidad y mis datos. Para cualquier consulta, escribe al administrador de tu hogar o al equipo del proyecto.</p>';
+function openPrivacy(){
+  document.getElementById('sheet').innerHTML='<div class="sheet-bg" data-a="closeSheet"><div class="sheet wrap" role="dialog" aria-labelledby="pvT"><div class="row"><h2 id="pvT">Aviso de privacidad</h2><button class="btn ghost" data-a="closeSheet" aria-label="Cerrar">✕</button></div><div class="small" style="display:flex;flex-direction:column;gap:2px;max-height:60vh;overflow:auto">'+PRIVACY_HTML+'</div><button class="btn block" data-a="closeSheet">Entendido</button></div></div>';
+}
+const GUIDE_KEY='roomly-guia-v1';
+const GUIDE=[
+  {t:'Registra los gastos de la casa',d:'Con el botón <b>+ Registrar</b> anotas dos tipos de gasto. <b>Fijos</b> (alquiler, luz, agua, internet, gas): se dividen en partes iguales y se pagan al tesorero del mes. <b>Compras puntuales</b>: lo que compraste para la casa; los demás te deben su parte.'},
+  {t:'Paga y confirma sin perseguir a nadie',d:'En <b>Inicio</b> ves cuánto debes, a quién y su número de Yape. Cuando pagues, toca <b>Ya pagué</b>; quien recibe lo confirma. Si un pago se atrasa, Roomly lo avisa.'},
+  {t:'Turnos justos para comprar',d:'En <b>Equidad</b> ves cuántas veces compró cada uno para la casa. Roomly sugiere a quién le toca la próxima compra y avisa si alguien está aportando menos.'}];
+function maybeGuide(){let seen=null;try{seen=localStorage.getItem(GUIDE_KEY)}catch(e){}if(seen)return;try{localStorage.setItem(GUIDE_KEY,'1')}catch(e){}openGuide(0)}
+function openGuide(i){
+  const g=GUIDE[i], last=i===GUIDE.length-1;
+  document.getElementById('sheet').innerHTML='<div class="sheet-bg" data-a="closeSheet"><div class="sheet wrap" role="dialog" aria-labelledby="gdT"><span class="label">Guía de inicio · '+(i+1)+' de '+GUIDE.length+'</span><h2 id="gdT">'+g.t+'</h2><p>'+g.d+'</p>'+
+   '<div style="display:flex;gap:6px;justify-content:center" aria-hidden="true">'+GUIDE.map((_,k)=>'<span style="width:8px;height:8px;border-radius:50%;background:'+(k===i?'var(--brand)':'var(--line)')+'"></span>').join('')+'</div>'+
+   '<div style="display:flex;gap:8px;justify-content:space-between">'+(last?'<span></span>':'<button class="btn ghost" data-a="guideEnd">Saltar</button>')+(last?'<button class="btn block" data-a="guideEnd">Empezar</button>':'<button class="btn" data-a="guide" data-v="'+(i+1)+'">Siguiente</button>')+'</div></div></div>';
+}
 /* ===================== Eventos ===================== */
 document.addEventListener('click',ev=>{
   const t=ev.target.closest('[data-a]'); if(!t)return;
   const a=t.dataset.a, h=home(), m=me();
+  if(t.tagName==='A')ev.preventDefault();
+  if(WRITE_ACTIONS.has(a)&&isOffline()){toast('Sin conexión. Conéctate a internet para guardar cambios.');return}
   if(a==='closeSheet'){if(ev.target===t||t.tagName==='BUTTON')closeSheet();return}
   if(t.tagName==='SELECT'||t.tagName==='DETAILS')return;
   if(a==='tab'){ui.tab=t.dataset.v;render();window.scrollTo(0,0)}
@@ -1171,6 +1288,23 @@ document.addEventListener('click',ev=>{
   else if(CLOUD&&a==='switch'){openAccount()}
   else if(CLOUD&&(a==='logout'||a==='cLogout')){cloudLogout()}
   else if(a==='cHomes'){cloudGoHomes()}
+  else if(a==='privacy'){openPrivacy()}
+  else if(a==='guide'){openGuide(Number(t.dataset.v)||0)}
+  else if(a==='guideEnd'){closeSheet()}
+  else if(a==='cWaitOpen'){const x=cs.homes.find(y=>y.code===t.dataset.v);showWaiting({code:x.code,name:x.name})}
+  else if(a==='cWaitCheck'){checkWaiting(true)}
+  else if(a==='cCancelReq'){cancelRequest()}
+  else if(a==='approveReq'){adminRpc('approve_request',{p_code:h.code,p_user:t.dataset.u,p_joined:iso(today)},'Solicitud aprobada')}
+  else if(a==='askRejectReq'){const r=h.requests.find(x=>x.user_id===t.dataset.u);confirmSheet('¿Rechazar la solicitud de '+esc(r.name)+'?','No podrá ver nada del hogar. Si fue un error, puede volver a pedir unirse con el código.','Sí, rechazar','doRejectReq','data-u="'+esc(r.user_id)+'"')}
+  else if(a==='doRejectReq'){closeSheet();adminRpc('reject_request',{p_code:h.code,p_user:t.dataset.u},'Solicitud rechazada')}
+  else if(a==='askMakeAdmin'){const x=memberById(h,t.dataset.u);confirmSheet('¿Hacer administrador a '+esc(x.name)+'?','Podrá aprobar solicitudes, cambiar al tesorero y registrar salidas. Tú dejarás de ser administrador.','Sí, cambiar','doMakeAdmin','data-u="'+esc(x.id)+'"')}
+  else if(a==='doMakeAdmin'){closeSheet();adminRpc('transfer_admin',{p_code:h.code,p_member_id:t.dataset.u},'Administrador actualizado')}
+  else if(a==='askLeaveHome'){const others=h.members.some(x=>x.userId&&x.userId!==cs.user.id);
+    if(isAdmin()&&others)return confirmSheet('Primero nombra a otro administrador','Eres el administrador de '+esc(h.name)+'. Antes de salir, elige en Convivientes a otra persona y toca «Hacer administrador».','Entendido','closeSheet','');
+    confirmSheet('¿Salir de '+esc(h.name)+'?',isAdmin()?'Nadie más usa este hogar: al salir se borrará completo, con todos sus gastos. No se puede deshacer.':'Dejarás de ver este hogar. Tu nombre seguirá en los gastos que ya existen para que las cuentas de los demás no se descuadren. Si debes algo, sigue pendiente.','Sí, salir','doLeaveHome','')}
+  else if(a==='doLeaveHome'){closeSheet();leaveThisHome()}
+  else if(a==='askDelete'){confirmSheet('¿Eliminar tu cuenta y tus datos?','Se borran tu cuenta, tu nombre, tu correo y tu número de Yape de todos tus hogares. Los montos de los gastos se mantienen como «Ex conviviente» para no descuadrar las cuentas de los demás. Si eres administrador, el rol pasa a otro conviviente; si nadie más usa el hogar, se borra completo. No se puede deshacer.','Sí, eliminar todo','doDelete','')}
+  else if(a==='doDelete'){closeSheet();deleteAccount()}
   else if(a==='cGoogle'){googleLogin(t)}
   else if(a==='cProfile'){if(home())openProfile();else{cs.view='profile';renderCloud()}}
   else if(a==='cForgot'){cs.email=(document.getElementById('aEmail')||{}).value||cs.email;cs.view='forgot';cs.msg='';cs.info='';renderCloud()}
@@ -1198,6 +1332,7 @@ document.addEventListener('click',ev=>{
 document.addEventListener('change',ev=>{
   const h=home();
   if(ev.target.id==='tesMonth'){let v=ev.target.value||CUR;if(v<MIN_FREE)v=MIN_FREE;if(v>shiftMonth(CUR,1))v=shiftMonth(CUR,1);ui.tesMonth=v;render()}
+  else if(ev.target.id==='tes'&&(!isAdmin()||isOffline())){toast(isOffline()?'Sin conexión.':'Solo el administrador puede cambiar el tesorero.');render()}
   else if(ev.target.id==='tes'){const k=ui.tesMonth||CUR;setTreasurer(h,k,ev.target.value,me().id);save();render();toast('Tesorero de '+monthName(k)+' actualizado')}
 });
 document.addEventListener('toggle',ev=>{const d=ev.target;if(d.classList&&d.classList.contains('grp')){ui.open=d.open?d.dataset.g:(ui.open===d.dataset.g?null:ui.open)}},true);
