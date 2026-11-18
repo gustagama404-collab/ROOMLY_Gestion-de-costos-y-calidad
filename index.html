@@ -328,7 +328,7 @@ function render(){
   const atMin=ui.month<=MIN_FREE;
   $app.innerHTML=
    '<header class="top"><div class="wrap"><div class="top-row"><div><div class="logo">Roomly</div><small>'+esc(h.name)+' · código '+esc(h.code)+'</small></div>'+
-   '<button class="who" data-a="switch" aria-label="Cambiar de roommate">'+esc(m.name)+' ⇄</button></div>'+
+   (CLOUD?'<button class="who" data-a="switch" aria-label="Tu cuenta: cerrar sesión o cambiar de hogar" style="white-space:nowrap;display:inline-flex;align-items:center;gap:6px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg>'+esc(m.name)+' ▾</button></div>':'<button class="who" data-a="switch" aria-label="Cambiar de roommate">'+esc(m.name)+' ⇄</button></div>')+
    (showMonth?'<div class="month"><button data-a="prev" aria-label="Mes anterior">‹</button><span>'+monthName(ui.month)+(isCur?' (actual)':'')+'</span><button data-a="next" aria-label="Mes siguiente"'+(isCur?' disabled style="opacity:.35"':'')+'>›</button></div>':'')+
    '</div></header><main class="wrap">'+(showMonth&&ui.month<MIN_FREE?viewLocked():body)+'</main>'+
    '<nav class="tabs" aria-label="Secciones"><div class="in">'+
@@ -457,10 +457,11 @@ const tesLogHtml=h=>{const L=(h.tesLog||[]).slice(-5).reverse();return L.length?
 function viewAjustes(){
   const h=home(), m=me();
   const tk=ui.tesMonth||CUR;
-  let html='<section class="card"><h2>Tesorero por mes</h2><p class="small muted">El hogar lo elige por consenso fuera de la app; aquí se registra quién cobra las cuotas fijas de cada mes. Cambiarlo solo afecta los gastos fijos que se registren después: los ya registrados siguen a nombre de quien era tesorero.</p>'+
+  let html=CLOUD?'<section class="card"><h2>Tu cuenta</h2><p class="small muted">Conectado con Google como <b>'+esc(cs.user.email||'')+'</b>. En este hogar eres <b>'+esc(m.name)+'</b> (Yape '+esc(m.yape)+').</p><div style="display:flex;gap:8px;flex-wrap:wrap">'+(AUTH_GOOGLE?'<button class="btn sec" data-a="cProfile">Editar mi perfil</button>':'<button class="btn sec" data-a="cChangePass">Cambiar contraseña</button>')+'<button class="btn sec" data-a="cHomes">Cambiar de hogar</button><button class="btn danger" data-a="cLogout">Cerrar sesión</button></div></section>':'';
+  html+='<section class="card"><h2>Tesorero por mes</h2><p class="small muted">El hogar lo elige por consenso fuera de la app; aquí se registra quién cobra las cuotas fijas de cada mes. Cambiarlo solo afecta los gastos fijos que se registren después: los ya registrados siguen a nombre de quien era tesorero.</p>'+
    '<div class="field"><label for="tesMonth">Mes</label><input id="tesMonth" type="month" value="'+tk+'" min="'+MIN_FREE+'" max="'+shiftMonth(CUR,1)+'"></div>'+
    '<div class="field"><label for="tes">Tesorero de '+monthName(tk)+'</label><select id="tes">'+'<option value="">Sin asignar</option>'+h.members.filter(x=>!x.leftAt||x.leftAt>=tk+'-01').map(x=>'<option value="'+x.id+'"'+(h.treasurer[tk]===x.id?' selected':'')+'>'+esc(x.name)+'</option>').join('')+'</select></div>'+tesLogHtml(h)+'</section>';
-  html+='<section class="card"><h2>Mis datos de cobro</h2><div class="field"><label for="yape">Número Yape / Plin</label><input id="yape" inputmode="tel" value="'+esc(m.yape)+'" maxlength="15"></div><span class="err" id="yapeErr"></span><button class="btn" data-a="saveYape">Guardar número</button></section>';
+  if(!CLOUD)html+='<section class="card"><h2>Mis datos de cobro</h2><div class="field"><label for="yape">Número Yape / Plin</label><input id="yape" inputmode="tel" value="'+esc(m.yape)+'" maxlength="15"></div><span class="err" id="yapeErr"></span><button class="btn" data-a="saveYape">Guardar número</button></section>';
   html+='<section class="card"><h2>Convivientes</h2><div class="list">'+h.members.map(x=>'<div class="item"><div class="who-line">'+av(x.id,x.name)+'<div style="min-width:0"><b>'+esc(x.name)+'</b><div class="small muted">Ingresó el '+dmy(x.joinedAt)+(x.leftAt?' · salió el '+dmy(x.leftAt):'')+(CLOUD&&!x.userId?' · aún no entra a la app':'')+'</div></div></div>'+(x.leftAt?'<span class="pill neu">Ya no vive aquí</span>':'<button class="btn sec sm" data-a="askLeave" data-u="'+x.id+'">Registrar salida</button>')+'</div><div id="leave-'+x.id+'"></div>').join('')+'</div>'+
    '<details><summary style="cursor:pointer;font-weight:600;color:var(--brand)">Agregar conviviente</summary><div style="display:flex;flex-direction:column;gap:10px;margin-top:10px">'+
    '<div class="field"><label for="nmName">Nombre</label><input id="nmName" maxlength="20"></div>'+
@@ -469,7 +470,7 @@ function viewAjustes(){
    '<div class="field"><label for="nmDate">Fecha de ingreso al hogar</label><input id="nmDate" type="date" value="'+iso(today)+'"></div>'+
    '<span class="err" id="nmErr"></span><button class="btn" data-a="addMember">Agregar</button></div></details></section>';
   html+='<section class="card"><h2>Calidad</h2><p class="small muted">Pruebas automáticas y registro de pruebas manuales del plan de gestión de calidad.</p><button class="btn sec" data-a="tab" data-v="pruebas">Abrir pruebas de calidad</button></section>';
-  html+='<section class="card"><h2>Sesión</h2><p class="small muted">Código del hogar para invitar: <b class="num">'+esc(h.code)+'</b>'+(CLOUD?'<br>Conectado como '+esc(cs.user.email||''):'')+'</p><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn sec" data-a="copy" data-v="'+esc(h.code)+'">Copiar código</button>'+(CLOUD?'<button class="btn sec" data-a="cHomes">Cambiar de hogar</button>':'')+'<button class="btn sec" data-a="logout">Cerrar sesión</button></div>'+
+  html+='<section class="card"><h2>'+(CLOUD?'Invitar y demo':'Sesión')+'</h2><p class="small muted">Código del hogar para invitar: <b class="num">'+esc(h.code)+'</b></p><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn sec" data-a="copy" data-v="'+esc(h.code)+'">Copiar código</button>'+(CLOUD?'':'<button class="btn sec" data-a="logout">Cerrar sesión</button>')+'</div>'+
    (h.demo?'<div id="resetBox"><button class="btn danger" data-a="askReset">Restablecer datos de ejemplo</button></div>':'')+'</section>';
   return html;
 }
@@ -551,7 +552,7 @@ const REQS=[
 ];
 const REQ_AUTO={'Alta de usuario':'RNF2','Gasto fijo en partes iguales':'RF1, RC1','Gasto puntual con deuda directa':'RF2, RF3','Empate en sugerencia de turno':'RF3, RC2','Hogar nuevo sin compras':'RC2','Conviviente incorporado a mitad de mes':'RC2','Compra menor al mínimo no suma al indicador':'RF3','Gasto anulado sale del balance y del indicador':'RF6','Cambio de tesorero no altera cuotas ya registradas':'RF1','Conviviente que sale del hogar':'RF1, RC2','El céntimo sobrante lo asume quien cobra':'RC1','Pocas compras no activan la alerta':'RF4','Máximo un aporte por persona por día':'RF3','Compra para parte del hogar no suma al indicador':'RF3','No se anula un gasto con pagos confirmados':'RF5','Pago avisado y confirmado':'RF5','El tesorero corrige gastos de quien ya salió':'RF6','La sugerencia de turno no incluye a quien ya salió':'RF3','Tiempo de respuesta del dashboard':'RNF1, RC3'};
 const MANUAL=[
-  CLOUD?{id:'M1',name:'Alta de usuario',req:'RNF2',steps:'En otro celular: Crear una cuenta nueva con un correo, tocar «Unirme a un hogar», escribir el código del hogar y elegir «Soy nuevo en este hogar». Luego cerrar sesión e intentar entrar con una contraseña incorrecta.',exp:'La persona aparece en Ajustes → Convivientes en todos los celulares; con la contraseña incorrecta se muestra «Correo o contraseña incorrectos».',crit:'Entra con la contraseña correcta y se rechaza la incorrecta (2 de 2).'}
+  CLOUD?{id:'M1',name:'Alta de usuario',req:'RNF2',steps:'En otro celular: tocar «Continuar con Google», elegir una cuenta de Gmail, escribir nombre y Yape, tocar «Unirme a un hogar» con el código y entrar. Luego cerrar sesión y volver a abrir la app.',exp:'La persona aparece en Ajustes → Convivientes en todos los celulares. Sin iniciar sesión con Google no se ve ningún dato del hogar.',crit:'Entra con su Google y, sin sesión, no accede a los datos (2 de 2).'}
        :{id:'M1',name:'Alta de usuario',req:'RNF2',steps:'Ajustes → Agregar conviviente: nombre "Prueba", PIN 1234, Yape 900000000. Cerrar sesión y entrar como Prueba con su PIN.',exp:'Prueba aparece en la lista de convivientes y entra con su PIN; con un PIN incorrecto se muestra "PIN incorrecto".',crit:'Entra con el PIN correcto y se rechaza el incorrecto (2 de 2).'},
   {id:'M2',name:'Gasto fijo',req:'RF1, RC1',steps:'Como el tesorero del mes, Registrar → Gasto fijo → Luz, S/ 100.00. Ir a Gastos.',exp:'Con 4 convivientes la cuota es S/ 25.00 cada uno y los otros 3 aparecen como pendientes con el tesorero.',crit:'La suma de las cuotas es igual al monto (diferencia S/ 0.00).'},
   {id:'M3',name:'Gasto puntual',req:'RF2, RF3',steps:'Entrar como Dayra (un día en que aún no haya registrado compras). Registrar → Compra puntual "Lejía", S/ 20.00, entre todos. Revisar Gastos y Equidad.',exp:'Los otros 3 le deben S/ 5.00 a Dayra y su conteo de compras sube en 1.',crit:'3 deudas de S/ 5.00 y conteo +1.'},
@@ -798,8 +799,13 @@ function errText(e){
   if(/Invalid login/i.test(m))return 'Correo o contraseña incorrectos.';
   if(/already (been )?registered/i.test(m))return 'Ese correo ya tiene cuenta. Entra con tu contraseña.';
   if(/not confirmed/i.test(m))return 'Primero confirma tu correo con el enlace que te enviamos.';
+  if(/provider is not enabled|Unsupported provider|validation_failed/i.test(m))return 'El ingreso con Google todavía no está activado. Avísale a quien administra Roomly.';
   if(/at least 6|Password should/i.test(m))return 'La contraseña debe tener al menos 6 caracteres.';
-  if(/rate limit|too many/i.test(m))return 'Demasiados intentos. Espera unos minutos y vuelve a intentar.';
+  if(/rate limit|too many/i.test(m))return 'Se enviaron demasiados correos. Espera unos minutos y vuelve a intentar.';
+  if(/only request this after|security purposes/i.test(m))return 'Espera un minuto antes de pedir otro enlace.';
+  if(/not authorized/i.test(m))return 'El servidor de correos todavía no puede enviar a ese correo. Avísale a quien administra Roomly.';
+  if(/should be different|same_password/i.test(m))return 'La nueva contraseña debe ser distinta a la anterior.';
+  if(/expired|invalid/i.test(m)&&/link|token|otp/i.test(m))return 'El enlace venció o ya se usó. Pide uno nuevo.';
   if(/fetch|network|Failed to/i.test(m))return 'Sin conexión. Revisa tu internet.';
   return m||'Ocurrió un error. Inténtalo de nuevo.';
 }
@@ -811,17 +817,59 @@ async function cloudBoot(){
   $app.innerHTML='<div class="login wrap">'+brand+'<p class="muted">Cargando…</p></div>';
   try{
     if(!window.supabase)await loadScript('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0/dist/umd/supabase.js');
+    const H=decodeURIComponent((location.hash||'').replace(/\+/g,' '));
+    cs.recovering=/type=recovery/.test(H);
+    const herr=/error_description=([^&]+)/.exec(H);
+    if(herr){cs.msg=errText(herr[1]);if(!/enlace/.test(cs.msg))cs.msg='El enlace venció o ya se usó. Pide uno nuevo.';history.replaceState(null,'',location.pathname+location.search)}
     sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
     const {data}=await sb.auth.getSession();
     cs.user=data.session?data.session.user:null;
   }catch(e){$app.innerHTML='<div class="login wrap">'+brand+'<div class="alert bad"><b>No se pudo conectar con Roomly.</b><span class="small">Revisa tu internet y vuelve a cargar la página.</span></div></div>';return}
   /* no se llama a Supabase dentro del aviso de sesión: se deja para el siguiente ciclo */
-  sb.auth.onAuthStateChange((ev,session)=>{const u=session?session.user:null;if((u&&u.id)!==(cs.user&&cs.user.id)){cs.user=u;setTimeout(afterAuth,0)}});
-  await afterAuth();
+  sb.auth.onAuthStateChange((ev,session)=>{const u=session?session.user:null;
+    if(ev==='PASSWORD_RECOVERY'&&u){cs.user=u;cs.recovering=true;setTimeout(showNewPass,0);return}
+    if((u&&u.id)!==(cs.user&&cs.user.id)){cs.user=u;setTimeout(afterAuth,0)}});
+  if(cs.recovering&&cs.user)showNewPass();else await afterAuth();
 }
+const AUTH_GOOGLE=true;   /* true: se entra con Google; false: correo y contraseña */
+const meta=()=>(cs.user&&cs.user.user_metadata)||{};
+const profName=()=>meta().roomly_name||'';
+const profYape=()=>meta().roomly_yape||'';
+const googleIcon='<svg width="18" height="18" viewBox="0 0 48 48" aria-hidden="true"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34.1 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.4-.4-3.5z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34.1 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-8l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.4-.4-3.5z"/></svg>';
+async function googleLogin(btn){
+  if(btn)btn.disabled=true; cs.msg='';
+  try{const {error}=await sb.auth.signInWithOAuth({provider:'google',options:{redirectTo:location.origin+location.pathname,queryParams:{prompt:'select_account'}}});if(error)throw error}
+  catch(e){cs.msg=errText(e);renderCloud()}
+}
+function profileForm(id,errId,withNote){
+  const first=(meta().full_name||meta().name||'').trim().split(/\s+/)[0]||'';
+  return '<div class="field"><label for="pName">Tu nombre</label><input id="pName" maxlength="20" autocomplete="given-name" value="'+esc(profName()||first)+'"></div>'+
+    '<div class="field"><label for="pYape">Tu número de Yape / Plin</label><input id="pYape" inputmode="tel" maxlength="15" value="'+esc(profYape())+'"><span class="small muted">Lo verán tus roommates para pagarte.</span></div>'+
+    '<span class="err" id="'+errId+'" role="alert"></span>';
+}
+function bindProfile(formId,errId,done){
+  const f=document.getElementById(formId);
+  f.onsubmit=async ev=>{ev.preventDefault();
+    const name=document.getElementById('pName').value.trim().replace(/\s+/g,' '), yape=document.getElementById('pYape').value.trim(), err=t=>document.getElementById(errId).textContent=t;
+    if(!name)return err('Escribe tu nombre.');
+    if(!/^[\d ]{6,15}$/.test(yape))return err('Escribe un número de Yape o Plin válido.');
+    const b=f.querySelector('button[type=submit]');b.disabled=true;
+    try{const {data,error}=await sb.auth.updateUser({data:{roomly_name:name,roomly_yape:yape}});if(error)throw error;
+      if(data&&data.user)cs.user=data.user; await done(name,yape);
+    }catch(e){b.disabled=false;err(errText(e))}
+  };
+}
+function openProfile(){
+  document.getElementById('sheet').innerHTML='<div class="sheet-bg" data-a="closeSheet"><form class="sheet wrap" id="epForm" novalidate><div class="row"><h2>Mi perfil</h2><button type="button" class="btn ghost" data-a="closeSheet" aria-label="Cerrar">✕</button></div><p class="small muted">Se actualiza tu nombre y tu Yape en este hogar.</p>'+profileForm('epForm','epErr')+'<button class="btn block" type="submit">Guardar</button></form></div>';
+  bindProfile('epForm','epErr',(name,yape)=>{const h=home(),m=me();
+    if(h.members.some(x=>x.id!==m.id&&x.name.toLowerCase()===name.toLowerCase())){toast('Ya hay otro conviviente llamado '+name+'; tu nombre en este hogar no cambió');}else m.name=name;
+    m.yape=yape;save();closeSheet();render();toast('Perfil actualizado')});
+}
+function showNewPass(){leaveHome();cs.view='newpass';renderCloud()}
 async function afterAuth(){
   leaveHome();
   if(!cs.user){cs.view='auth';renderCloud();return}
+  if(!profName()){cs.view='profile';renderCloud();return}
   await listMyHomes();
   const last=lsGet(LAST);
   const pick=cs.homes.find(x=>x.code===last)||(cs.homes.length===1?cs.homes[0]:null);
@@ -953,34 +1001,59 @@ async function doSync(){
 /* ---- pantallas de cuenta y hogares ---- */
 function renderCloud(){
   const V=cs.view; let html='<div class="login wrap">'+brand;
-  if(V==='auth'){
+  if(V==='auth'&&AUTH_GOOGLE){
+    html+='<section class="card"><h2>Entra a Roomly</h2><p class="small muted">Usa tu cuenta de Google (Gmail). No necesitas crear otra contraseña.</p>'+
+     (cs.msg?'<span class="err" role="alert">'+esc(cs.msg)+'</span>':'')+
+     '<button class="btn block" data-a="cGoogle" style="background:#fff;color:#1f1f1f;border:1px solid #dadce0;display:flex;align-items:center;justify-content:center;gap:10px">'+googleIcon+'Continuar con Google</button></section>';
+  }else if(V==='profile'){
+    html+='<form class="card" id="profForm" novalidate><h2>¿Cómo te llamas?</h2><p class="small muted">Así te verán tus roommates en Roomly. Puedes cambiarlo después en Ajustes.</p>'+profileForm('profForm','prErr')+
+     '<button class="btn block" type="submit">Continuar</button><p class="small muted" style="text-align:center">Conectado como '+esc(cs.user.email||'')+'</p><button type="button" class="btn ghost" data-a="cLogout">No soy yo, salir</button></form>';
+  }else if(V==='auth'){
     const reg=cs.authMode==='signup';
     html+='<form class="card" id="authForm" novalidate><h2>'+(reg?'Crea tu cuenta':'Entra a Roomly')+'</h2>'+
      (cs.info?'<div class="alert info small">'+esc(cs.info)+'</div>':'')+
      '<div class="field"><label for="aEmail">Correo</label><input id="aEmail" type="email" autocomplete="email" inputmode="email" value="'+esc(cs.email)+'"></div>'+
      '<div class="field"><label for="aPass">Contraseña'+(reg?' (mínimo 6 caracteres)':'')+'</label><input id="aPass" type="password" autocomplete="'+(reg?'new-password':'current-password')+'"></div>'+
      '<span class="err" id="aErr" role="alert">'+esc(cs.msg)+'</span><button class="btn block" type="submit">'+(reg?'Crear cuenta':'Entrar')+'</button>'+
-     '<button type="button" class="btn ghost" data-a="cAuthMode">'+(reg?'Ya tengo cuenta':'Crear una cuenta nueva')+'</button></form>';
+     '<button type="button" class="btn ghost" data-a="cAuthMode">'+(reg?'Ya tengo cuenta':'Crear una cuenta nueva')+'</button>'+
+     (reg?'':'<button type="button" class="btn ghost sm" data-a="cForgot">¿Olvidaste tu contraseña?</button>')+'</form>';
+  }else if(V==='forgot'){
+    html+='<form class="card" id="forgotForm" novalidate><h2>Recuperar contraseña</h2><p class="small muted">Escribe el correo con el que creaste tu cuenta. Te enviaremos un enlace para crear una contraseña nueva.</p>'+
+     '<div class="field"><label for="fEmail">Correo</label><input id="fEmail" type="email" autocomplete="email" inputmode="email" value="'+esc(cs.email)+'"></div>'+
+     '<span class="err" id="fErrM" role="alert"></span><button class="btn block" type="submit">Enviar enlace</button><button type="button" class="btn ghost" data-a="cBackAuth">Volver</button></form>';
+  }else if(V==='newpass'){
+    html+='<form class="card" id="npForm" novalidate><h2>Crea tu nueva contraseña</h2><p class="small muted">Cuenta: <b>'+esc(cs.user?cs.user.email:'')+'</b></p>'+passFields()+'<span class="err" id="npErr" role="alert"></span><button class="btn block" type="submit">Guardar y entrar</button></form>';
   }else if(V==='homes'){
-    html+=(cs.homes.length?'<section class="card"><h2>Tus hogares</h2><div class="list">'+cs.homes.map(x=>'<div class="item"><div style="min-width:0"><b>'+esc(x.name)+'</b><div class="small muted">Código '+esc(x.code)+' · entras como '+esc(x.member)+'</div></div><button class="btn sm" data-a="cOpen" data-v="'+esc(x.code)+'">Entrar</button></div>').join('')+'</div></section>':'')+
+    html+='<p style="margin:0 0 4px"><b>Hola, '+esc(profName())+'</b> <button class="btn ghost sm" data-a="cProfile">Editar</button></p>'+(cs.homes.length?'<section class="card"><h2>Tus hogares</h2><div class="list">'+cs.homes.map(x=>'<div class="item"><div style="min-width:0"><b>'+esc(x.name)+'</b><div class="small muted">Código '+esc(x.code)+' · entras como '+esc(x.member)+'</div></div><button class="btn sm" data-a="cOpen" data-v="'+esc(x.code)+'">Entrar</button></div>').join('')+'</div></section>':'')+
      '<form class="card" id="joinForm" novalidate><h2>Unirme a un hogar</h2><p class="small muted">Pídele el código a quien creó el hogar.</p><div class="field"><label for="jCode">Código del hogar</label><input id="jCode" autocapitalize="characters" maxlength="8" placeholder="Ej.: RMAB12"></div><span class="err" id="jErr" role="alert"></span><button class="btn block" type="submit">Buscar hogar</button></form>'+
      '<section class="card"><h2>Crear un hogar</h2><p class="small muted">Serás el primer conviviente y el tesorero de este mes. Luego compartes el código con tus roommates.</p><button class="btn sec block" data-a="cCreate">Crear hogar</button></section>'+
      '<p class="small muted" style="text-align:center">Conectado como '+esc(cs.user.email||'')+'</p><button class="btn ghost" data-a="cLogout">Cerrar sesión</button>';
   }else if(V==='join'){
     const p=cs.preview, free=p.members.filter(x=>!x.claimed&&!x.left);
     html+='<form class="card" id="claimForm" novalidate><div class="row"><h2>'+esc(p.name)+'</h2><button type="button" class="btn ghost sm" data-a="cBack">Volver</button></div>'+
-     '<div class="field"><label for="jWho">¿Quién eres?</label><select id="jWho">'+free.map(x=>'<option value="'+esc(x.id)+'">'+esc(x.name)+'</option>').join('')+'<option value="">Soy nuevo en este hogar</option></select></div>'+
-     '<div id="newBox" style="display:'+(free.length?'none':'flex')+';flex-direction:column;gap:10px"><div class="field"><label for="jName">Tu nombre</label><input id="jName" maxlength="20"></div><div class="field"><label for="jYape">Tu Yape / Plin</label><input id="jYape" inputmode="tel" maxlength="15"></div></div>'+
+     '<div class="field"><label for="jWho">¿Quién eres?</label><select id="jWho">'+free.map(x=>'<option value="'+esc(x.id)+'">'+esc(x.name)+'</option>').join('')+'<option value="">Soy nuevo: entrar como '+esc(profName())+'</option></select></div>'+
+     '<span class="small muted">Si eliges un nombre de la lista, entras en su lugar y se usa tu número de Yape.</span>'+
      '<span class="err" id="jErr2" role="alert"></span><button class="btn block" type="submit">Unirme</button></form>';
   }else if(V==='create'){
     html+='<form class="card" id="cForm" novalidate><div class="row"><h2>Crear un hogar</h2><button type="button" class="btn ghost sm" data-a="cBack">Volver</button></div>'+
      '<div class="field"><label for="cHome">Nombre del hogar</label><input id="cHome" maxlength="30" placeholder="Ej.: Depa Surco"></div>'+
      '<label class="small" style="display:flex;gap:8px;align-items:center"><input type="checkbox" id="cDemo"> Cargar datos de ejemplo (demo para la sustentación)</label>'+
-     '<div id="cRealBox" style="display:flex;flex-direction:column;gap:10px"><div class="field"><label for="cName">Tu nombre</label><input id="cName" maxlength="20"></div><div class="field"><label for="cYape">Tu Yape / Plin</label><input id="cYape" inputmode="tel" maxlength="15"></div></div>'+
+     '<div id="cRealBox" class="small muted">Entrarás como <b>'+esc(profName())+'</b> (Yape '+esc(profYape())+').</div>'+
      '<div id="cDemoBox" style="display:none;flex-direction:column;gap:10px"><div class="field"><label for="cWho">¿Quién eres en el ejemplo?</label><select id="cWho"><option value="f">Fernando</option><option value="g" selected>Gustavo</option><option value="d">Dayra</option><option value="m">Mauricio</option></select></div><span class="small muted">Se crean 3 meses de gastos de ejemplo. Los demás entran con el código y eligen su nombre.</span></div>'+
      '<span class="err" id="cErr" role="alert"></span><button class="btn block" type="submit">Crear hogar</button></form>';
   }
   $app.innerHTML=html+'</div>';
+  if(V==='profile')bindProfile('profForm','prErr',()=>afterAuth());
+  if(V==='newpass')bindPassForm('npForm','npErr',()=>{cs.recovering=false;toast('Contraseña actualizada');afterAuth()});
+  const ff=document.getElementById('forgotForm');
+  if(ff)ff.onsubmit=async ev=>{ev.preventDefault();
+    const email=document.getElementById('fEmail').value.trim(), err=t=>document.getElementById('fErrM').textContent=t;
+    if(!/^\S+@\S+\.\S+$/.test(email))return err('Escribe un correo válido.');
+    cs.email=email; const b=ff.querySelector('button[type=submit]'); b.disabled=true;
+    try{const {error}=await sb.auth.resetPasswordForEmail(email,{redirectTo:location.origin+location.pathname});if(error)throw error;
+      cs.view='auth';cs.authMode='login';cs.msg='';cs.info='Listo. Si ese correo tiene una cuenta, en unos minutos te llegará un enlace (revisa también Spam). Ábrelo en este mismo celular.';renderCloud();
+    }catch(e){b.disabled=false;err(errText(e))}
+  };
   const busy=(f,on)=>{const b=f.querySelector('button[type=submit]');if(b){b.disabled=on;b.style.opacity=on?.6:1}};
   const af=document.getElementById('authForm');
   if(af)af.onsubmit=async ev=>{ev.preventDefault();
@@ -1009,15 +1082,13 @@ function renderCloud(){
     }catch(e){busy(jf,false);err(errText(e))}
   };
   const who=document.getElementById('jWho');
-  if(who)who.onchange=()=>{document.getElementById('newBox').style.display=who.value?'none':'flex'};
+
   const cf=document.getElementById('claimForm');
   if(cf)cf.onsubmit=async ev=>{ev.preventDefault();
     const err=t=>document.getElementById('jErr2').textContent=t, id=who.value||null;
-    let name=null,yape=null;
-    if(!id){name=document.getElementById('jName').value.trim();yape=document.getElementById('jYape').value.trim();
-      if(!name)return err('Escribe tu nombre.'); if(!/^[\d ]{6,15}$/.test(yape))return err('Escribe un número de Yape o Plin válido.')}
     busy(cf,true);
-    try{const {error}=await sb.rpc('join_home',{p_code:cs.preview.code,p_member_id:id,p_name:name,p_yape:yape,p_joined:iso(today)}); if(error)throw error;
+    try{const {data:mid,error}=await sb.rpc('join_home',{p_code:cs.preview.code,p_member_id:id,p_name:id?null:profName(),p_yape:id?null:profYape(),p_joined:iso(today)}); if(error)throw error;
+      if(id&&profYape())await sb.from('members').update({yape:profYape()}).eq('home_code',cs.preview.code).eq('id',mid||id);
       await listMyHomes(); await openHome(cs.preview.code); toast('Listo, ya estás en '+cs.preview.name);
     }catch(e){busy(cf,false);err(errText(e))}
   };
@@ -1029,9 +1100,9 @@ function renderCloud(){
     const hname=v('cHome'); if(!hname)return err('Ponle un nombre al hogar.');
     let p;
     if(demo.checked){const s=seedDemo(today);
-      p={home:{name:hname,demo:true,treasurer:s.treasurer,tesLog:[]},members:s.members.map(({pin,...m})=>m),expenses:s.expenses,me:v('cWho')};
-    }else{const name=v('cName'), yape=v('cYape');
-      if(!name)return err('Escribe tu nombre.'); if(!/^[\d ]{6,15}$/.test(yape))return err('Escribe un número de Yape o Plin válido.');
+      const me_=v('cWho');
+      p={home:{name:hname,demo:true,treasurer:s.treasurer,tesLog:[]},members:s.members.map(({pin,...m})=>m.id===me_?Object.assign(m,{yape:profYape()||m.yape}):m),expenses:s.expenses,me:me_};
+    }else{const name=profName(), yape=profYape();
       const id=uid();
       p={home:{name:hname,demo:false,treasurer:{[CUR]:id},tesLog:[{by:id,at:stamp(),month:CUR,from:null,to:id}]},members:[{id,name,yape,joinedAt:iso(today)}],expenses:[],me:id};
     }
@@ -1048,7 +1119,23 @@ function renderCloud(){
   };
 }
 function openAccount(){
-  document.getElementById('sheet').innerHTML='<div class="sheet-bg" data-a="closeSheet"><div class="sheet wrap"><div class="row"><h2>Tu cuenta</h2><button class="btn ghost" data-a="closeSheet" aria-label="Cerrar">✕</button></div><p class="small muted">Conectado como <b>'+esc(cs.user.email||'')+'</b>. En este hogar eres <b>'+esc(me().name)+'</b>.</p><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn sec" data-a="cHomes">Cambiar de hogar</button><button class="btn sec" data-a="cLogout">Cerrar sesión</button></div></div></div>';
+  document.getElementById('sheet').innerHTML='<div class="sheet-bg" data-a="closeSheet"><div class="sheet wrap"><div class="row"><h2>Tu cuenta</h2><button class="btn ghost" data-a="closeSheet" aria-label="Cerrar">✕</button></div><p class="small muted">Conectado con Google como <b>'+esc(cs.user.email||'')+'</b>. En este hogar eres <b>'+esc(me().name)+'</b>.</p><div style="display:flex;gap:8px;flex-wrap:wrap">'+(AUTH_GOOGLE?'<button class="btn sec" data-a="cProfile">Editar mi perfil</button>':'<button class="btn sec" data-a="cChangePass">Cambiar contraseña</button>')+'<button class="btn sec" data-a="cHomes">Cambiar de hogar</button><button class="btn danger" data-a="cLogout">Cerrar sesión</button></div></div></div>';
+}
+function openChangePass(){
+  document.getElementById('sheet').innerHTML='<div class="sheet-bg" data-a="closeSheet"><form class="sheet wrap" id="cpForm" novalidate><div class="row"><h2>Cambiar contraseña</h2><button type="button" class="btn ghost" data-a="closeSheet" aria-label="Cerrar">✕</button></div>'+passFields()+'<span class="err" id="cpErr" role="alert"></span><button class="btn block" type="submit">Guardar contraseña</button></form></div>';
+  bindPassForm('cpForm','cpErr',()=>{closeSheet();toast('Contraseña actualizada')});
+}
+const passFields=()=>'<div class="field"><label for="np1">Nueva contraseña (mínimo 6 caracteres)</label><input id="np1" type="password" autocomplete="new-password"></div><div class="field"><label for="np2">Repite la contraseña</label><input id="np2" type="password" autocomplete="new-password"></div>';
+function bindPassForm(formId,errId,done){
+  const f=document.getElementById(formId);
+  f.onsubmit=async ev=>{ev.preventDefault();
+    const p1=document.getElementById('np1').value, p2=document.getElementById('np2').value, err=t=>document.getElementById(errId).textContent=t;
+    if(p1.length<6)return err('La contraseña debe tener al menos 6 caracteres.');
+    if(p1!==p2)return err('Las dos contraseñas no coinciden.');
+    const b=f.querySelector('button[type=submit]');b.disabled=true;
+    try{const {error}=await sb.auth.updateUser({password:p1});if(error)throw error;done()}catch(e){b.disabled=false;err(errText(e))}
+  };
+  setTimeout(()=>{const x=document.getElementById('np1');x&&x.focus()},50);
 }
 async function cloudGoHomes(){leaveHome();lsSet(LAST,null);await listMyHomes();cs.view='homes';renderCloud()}
 async function cloudLogout(){leaveHome();lsSet(LAST,null);cs.user=null;cs.view='auth';cs.authMode='login';cs.info='';renderCloud();try{await sb.auth.signOut()}catch(e){}}
@@ -1084,6 +1171,11 @@ document.addEventListener('click',ev=>{
   else if(CLOUD&&a==='switch'){openAccount()}
   else if(CLOUD&&(a==='logout'||a==='cLogout')){cloudLogout()}
   else if(a==='cHomes'){cloudGoHomes()}
+  else if(a==='cGoogle'){googleLogin(t)}
+  else if(a==='cProfile'){if(home())openProfile();else{cs.view='profile';renderCloud()}}
+  else if(a==='cForgot'){cs.email=(document.getElementById('aEmail')||{}).value||cs.email;cs.view='forgot';cs.msg='';cs.info='';renderCloud()}
+  else if(a==='cBackAuth'){cs.view='auth';renderCloud()}
+  else if(a==='cChangePass'){openChangePass()}
   else if(a==='cAuthMode'){cs.authMode=cs.authMode==='signup'?'login':'signup';cs.msg='';cs.info='';renderCloud()}
   else if(a==='cOpen'){openHome(t.dataset.v)}
   else if(a==='cCreate'){cs.view='create';renderCloud()}
