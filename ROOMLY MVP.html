@@ -1,0 +1,1115 @@
+<!doctype html><html lang="es"><head><meta charset="utf-8"><link rel="preconnect" href="https://rvvggrgdineaxdhcyidl.supabase.co"><link rel="preconnect" href="https://cdn.jsdelivr.net"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#2E5E4E"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Roomly"><style>:root{color-scheme:light;padding-top:env(safe-area-inset-top);padding-bottom:env(safe-area-inset-bottom)}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style></head><body><title>Roomly</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap">
+<style>
+/* App móvil de una columna: cabecera fija arriba, contenido en tarjetas, barra de pestañas abajo */
+:root{
+  --bg:#F3F5F2; --surface:#FFFFFF; --tint:#EAF0EC; --line:#D5DDD8;
+  --fg:#18201C; --muted:#56625C; --brand:#2E5E4E; --brand-2:#1F4E5F; --on-brand:#FFFFFF;
+  --ok:#2E7D6B; --ok-bg:#E2F1EB; --warn:#8A5A0B; --warn-bg:#FBF0DB; --danger:#9C2B2B; --danger-bg:#F8E4E2;
+  --shadow:0 1px 2px rgba(24,32,28,.06),0 4px 14px rgba(24,32,28,.05);
+  --display:'Space Grotesk',Arial,sans-serif; --body:'Inter',Arial,sans-serif;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#111816; --surface:#18221F; --tint:#1F2E29; --line:#2C3B36;
+  --fg:#E7EEEA; --muted:#A3B2AB; --brand:#5FA88E; --brand-2:#6FA6B8; --on-brand:#0D1613;
+  --ok:#6CC3A6; --ok-bg:#183229; --warn:#E3B567; --warn-bg:#33281A; --danger:#EE8F86; --danger-bg:#3A1F1D;
+  --shadow:0 1px 2px rgba(0,0,0,.3); color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#111816; --surface:#18221F; --tint:#1F2E29; --line:#2C3B36;
+  --fg:#E7EEEA; --muted:#A3B2AB; --brand:#5FA88E; --brand-2:#6FA6B8; --on-brand:#0D1613;
+  --ok:#6CC3A6; --ok-bg:#183229; --warn:#E3B567; --warn-bg:#33281A; --danger:#EE8F86; --danger-bg:#3A1F1D;
+  --shadow:0 1px 2px rgba(0,0,0,.3); color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font-family:var(--body);font-size:15px;line-height:1.45}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:30;background:var(--brand)}
+.app{max-width:480px;margin:0 auto;min-height:100vh;display:flex;flex-direction:column}
+.wrap{padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+h1,h2,h3{font-family:var(--display);margin:0;text-wrap:balance}
+h2{font-size:20px} h3{font-size:16px}
+p{margin:0}
+button,input,select{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:3px solid var(--brand-2);outline-offset:2px}
+.num{font-variant-numeric:tabular-nums}
+
+header.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--brand);color:var(--on-brand);padding-block:12px}
+.top-row{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.logo{font-family:var(--display);font-weight:700;font-size:22px;letter-spacing:-.3px}
+.top small{display:block;opacity:.85;font-size:12.5px}
+.who{background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.3);color:var(--on-brand);border-radius:999px;padding:6px 12px;font-size:13px;font-weight:600}
+.month{display:flex;align-items:center;gap:8px;margin-top:10px}
+.month button{background:rgba(255,255,255,.14);border:0;color:var(--on-brand);width:32px;height:32px;border-radius:8px;font-size:18px;line-height:1}
+.month span{font-weight:600;min-width:130px;text-align:center}
+
+main{flex:1;display:flex;flex-direction:column;gap:14px;padding-block:16px 110px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px;display:flex;flex-direction:column;gap:12px;box-shadow:var(--shadow);min-width:0}
+.card.flat{box-shadow:none}
+.row{display:flex;align-items:center;justify-content:space-between;gap:10px;min-width:0}
+.row > *{min-width:0}
+.muted{color:var(--muted)}
+.small{font-size:13px}
+.label{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.tiles{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.tile{background:var(--tint);border-radius:12px;padding:12px;display:flex;flex-direction:column;gap:2px}
+.tile b{font-family:var(--display);font-size:22px}
+.pill{display:inline-flex;align-items:center;gap:6px;border-radius:999px;padding:3px 10px;font-size:12.5px;font-weight:600;white-space:nowrap}
+.pill.ok{background:var(--ok-bg);color:var(--ok)} .pill.warn{background:var(--warn-bg);color:var(--warn)} .pill.bad{background:var(--danger-bg);color:var(--danger)} .pill.neu{background:var(--tint);color:var(--muted)}
+.dot{width:8px;height:8px;border-radius:50%;background:currentColor}
+.btn{border:0;border-radius:10px;padding:11px 14px;font-weight:600;background:var(--brand);color:var(--on-brand)}
+.btn.sec{background:var(--tint);color:var(--brand)}
+.btn.ghost{background:transparent;color:var(--brand);padding:6px 8px}
+.btn.danger{background:var(--danger-bg);color:var(--danger)}
+.btn.sm{padding:7px 10px;font-size:13px;border-radius:8px}
+.btn.block{width:100%}
+.list{display:flex;flex-direction:column}
+.item{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 0;border-top:1px solid var(--line)}
+.item:first-child{border-top:0;padding-top:0}
+.avatar{width:32px;height:32px;border-radius:50%;display:grid;place-items:center;font-weight:700;font-size:13px;flex:none;color:#fff}
+.who-line{display:flex;align-items:center;gap:10px;min-width:0;flex:1}
+.acts{display:flex;flex-direction:column;gap:6px;flex:none}
+.alert{border-radius:12px;padding:12px 14px;display:flex;flex-direction:column;gap:8px}
+.alert.bad{background:var(--danger-bg);color:var(--danger)}
+.alert.info{background:var(--tint);color:var(--fg)}
+.turn{background:var(--brand);color:var(--on-brand);border-radius:14px;padding:16px;display:flex;flex-direction:column;gap:4px}
+.turn b{font-family:var(--display);font-size:22px}
+.bars{display:flex;flex-direction:column;gap:12px}
+.bar-row{display:grid;grid-template-columns:78px 1fr auto;align-items:center;gap:10px}
+.bar{height:12px;background:var(--tint);border-radius:6px;position:relative;overflow:hidden}
+.bar i{position:absolute;inset:0 auto 0 0;border-radius:6px}
+.bar .exp{position:absolute;top:-3px;bottom:-3px;width:2px;background:var(--fg);opacity:.55}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:4px 10px;font-size:12.5px;display:inline-flex;align-items:center;gap:6px}
+.chip.paid{background:var(--ok-bg);border-color:transparent;color:var(--ok)}
+.chip.due{background:var(--warn-bg);border-color:transparent;color:var(--warn)}
+button.chip{cursor:pointer}
+.seg{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;background:var(--tint);border-radius:10px;padding:3px;gap:3px}
+.seg button{border:0;background:transparent;border-radius:8px;padding:8px;font-weight:600;color:var(--muted)}
+.seg button[aria-pressed="true"]{background:var(--surface);color:var(--brand);box-shadow:var(--shadow)}
+.field{display:flex;flex-direction:column;gap:6px}
+.field label{font-weight:600;font-size:13.5px}
+.field input,.field select{border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:11px 12px;width:100%;min-width:0}
+.err{color:var(--danger);font-size:13px}
+.checks{display:flex;flex-wrap:wrap;gap:8px}
+.checks label{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);border-radius:999px;padding:6px 12px;font-size:13.5px}
+table{border-collapse:collapse;width:100%;font-size:13.5px}
+th,td{padding:8px 6px;text-align:right;border-bottom:1px solid var(--line)}
+th:first-child,td:first-child{text-align:left}
+th{color:var(--muted);font-weight:600;font-size:12px}
+.scroll-x{overflow-x:auto}
+.lock{border:1px dashed var(--brand);border-radius:14px;padding:16px;display:flex;gap:12px;align-items:flex-start;background:var(--tint)}
+.lock svg{flex:none}
+.msg{background:var(--tint);border-radius:10px;padding:12px;font-size:14px;white-space:pre-wrap}
+.test{display:flex;gap:12px;align-items:flex-start;padding:12px 0;border-top:1px solid var(--line)}
+.test:first-child{border-top:0}
+.test .res{flex:none}
+
+nav.tabs{position:fixed;left:0;right:0;bottom:0;z-index:20;background:var(--surface);border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom,0px)}
+nav.tabs .in{max-width:480px;margin:0 auto;display:grid;grid-template-columns:repeat(5,1fr);padding-left:max(8px,env(safe-area-inset-left,0px));padding-right:max(8px,env(safe-area-inset-right,0px))}
+nav.tabs button{border:0;background:none;padding:8px 2px 10px;display:flex;flex-direction:column;align-items:center;gap:3px;font-size:11.5px;font-weight:600;color:var(--muted)}
+nav.tabs button[aria-current="page"]{color:var(--brand)}
+nav.tabs .add{color:var(--on-brand)}
+nav.tabs .add span.plus{width:44px;height:44px;border-radius:14px;background:var(--brand);display:grid;place-items:center;font-size:26px;margin-top:-14px;box-shadow:var(--shadow)}
+nav.tabs .add em{font-style:normal;color:var(--brand)}
+
+.sheet-bg{position:fixed;inset:0;z-index:40;background:rgba(10,16,14,.45);display:flex;align-items:flex-end;justify-content:center}
+.sheet{background:var(--bg);width:100%;max-width:480px;max-height:92vh;overflow:auto;border-radius:18px 18px 0 0;padding-block:18px calc(18px + env(safe-area-inset-bottom,0px));display:flex;flex-direction:column;gap:14px}
+.toast{position:fixed;left:50%;bottom:calc(86px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--fg);color:var(--bg);padding:10px 16px;border-radius:10px;font-weight:600;z-index:50;font-size:14px;max-width:90vw}
+
+.login{flex:1;display:flex;flex-direction:column;justify-content:center;gap:18px;padding-block:32px}
+.brand-hero{display:flex;flex-direction:column;gap:6px}
+.brand-hero .logo{font-size:40px;color:var(--brand)}
+.demo-box{border:1px dashed var(--line);border-radius:12px;padding:12px;font-size:13.5px;background:var(--surface)}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+.card.void{opacity:.62}
+.card.void h3,.card.void b.num{text-decoration:line-through}
+.blur{filter:blur(5px);user-select:none;pointer-events:none}
+.notice{border-left:4px solid var(--warn)}
+details.grp{display:block;padding:10px 0}
+details.grp summary{list-style:none;display:flex;align-items:center;gap:10px;cursor:pointer}
+details.grp summary::-webkit-details-marker{display:none}
+details.grp .chev{color:var(--muted);transition:transform .2s}
+details.grp[open] .chev{transform:rotate(180deg)}
+details.grp .sub{display:flex;flex-direction:column;gap:8px;margin-top:10px;padding-left:44px}
+.sub-item{padding:6px 0;border-top:1px dashed var(--line)}
+input:disabled,select:disabled{opacity:.6}
+</style>
+
+<div class="app" id="app"></div>
+<div id="sheet"></div>
+<div id="toast" class="toast" hidden></div>
+
+<script>
+/* ===================== Conexión a Supabase =====================
+   Vacío: modo demo en un solo dispositivo (datos en el navegador).
+   Con URL y clave: modo multiusuario, cada roommate entra con su correo. */
+const SUPABASE_URL='https://rvvggrgdineaxdhcyidl.supabase.co';
+const SUPABASE_KEY='sb_publishable_F7ow1xcWPSG_BAMgSAGHUw_g7owfutr';
+const CLOUD=!!(SUPABASE_URL&&SUPABASE_KEY);
+
+/* ===================== Lógica de cálculo (funciones puras) ===================== */
+const COLORS=['#2E5E4E','#1F4E5F','#8A5A0B','#7A3E62','#3C5A99','#6B6B2F'];
+const CAT_FIJO=['Alquiler','Luz','Agua','Internet','Gas'];
+const CAT_PUNT=['Limpieza','Cocina','Baño','Otros'];
+const ALERTA=0.5, BAJO=0.8;      /* umbrales del semáforo del indicador */
+const MIN_APORTE=500;            /* S/ 5.00: monto mínimo para que una compra cuente como aporte */
+const DIAS_AVISO=3;              /* días sin pagar para marcar un pago como atrasado */
+const MIN_COMPRAS=4;             /* compras del hogar en el mes para activar el semáforo */
+
+const pad=n=>String(n).padStart(2,'0');
+const iso=d=>d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());
+const parse=s=>{const [y,m,d]=s.split('-').map(Number);return new Date(y,m-1,d)};
+const monthOf=s=>s.slice(0,7);
+const MESES=['enero','febrero','marzo','abril','mayo','junio','julio','agosto','setiembre','octubre','noviembre','diciembre'];
+const monthName=k=>{const [y,m]=k.split('-').map(Number);return MESES[m-1]+' '+y};
+const shiftMonth=(k,n)=>{const [y,m]=k.split('-').map(Number);const d=new Date(y,m-1+n,1);return d.getFullYear()+'-'+pad(d.getMonth()+1)};
+const monthStart=k=>parse(k+'-01');
+const monthEnd=k=>{const s=monthStart(k);return new Date(s.getFullYear(),s.getMonth()+1,0)};
+const dayDiff=(a,b)=>Math.round((b-a)/86400000);
+const fmt=c=>'S/ '+(c/100).toLocaleString('es-PE',{minimumFractionDigits:2,maximumFractionDigits:2});
+const ddmm=s=>s.slice(8,10)+'/'+s.slice(5,7);
+const dmy=s=>s.split('-').reverse().join('/');
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const uid=()=>Math.random().toString(36).slice(2,8)+Date.now().toString(36).slice(-4);
+const stamp=()=>{const d=new Date();return iso(d)+' '+pad(d.getHours())+':'+pad(d.getMinutes())};
+
+/* Divide en partes iguales trabajando en céntimos. Los céntimos que sobran los asume quien cobra (tesorero o comprador) */
+function splitCents(total,ids,payer){
+  const n=ids.length, base=Math.floor(total/n); let rest=total-base*n; const out={};
+  if(payer&&ids.includes(payer)){ids.forEach(id=>out[id]=base);out[payer]+=rest;return out}
+  ids.forEach(id=>{out[id]=base+(rest>0?1:0); if(rest>0)rest--;});
+  return out;
+}
+/* Convivientes activos en una fecha: ya ingresaron y todavía no salieron */
+const isActive=(m,dateStr)=>m.joinedAt<=dateStr&&(!m.leftAt||m.leftAt>=dateStr);
+const activeOn=(home,dateStr)=>home.members.filter(m=>isActive(m,dateStr)).map(m=>m.id);
+const live=home=>home.expenses.filter(e=>!e.void);
+const forAll=(home,e)=>activeOn(home,e.date).every(id=>e.participants.includes(id));
+/* Cuenta como aporte: compra puntual vigente, desde S/ 5.00 y dividida entre todos los convivientes activos */
+const countsAsAporte=(home,e)=>e.type==='puntual'&&!e.void&&e.amount>=MIN_APORTE&&forAll(home,e);
+const whyNoAporte=(home,e)=>e.amount<MIN_APORTE?'No suma al indicador: menor a '+fmt(MIN_APORTE):(!forAll(home,e)?'No suma al indicador: no es para todo el hogar':'');
+/* No se anula un gasto con pagos confirmados o avisados */
+const canVoid=e=>!Object.keys(e.paid).length&&!Object.keys(e.claims||{}).length;
+/* Edita quien registró; si ya salió del hogar, el tesorero de ese mes */
+const canEditExp=(home,e,id)=>e.by===id||(!!memberById(home,e.by).leftAt&&home.treasurer[monthOf(e.date)]===id);
+function setTreasurer(h,k,to,by){const from=h.treasurer[k]||null;to=to||null;if(from===to)return;if(to)h.treasurer[k]=to;else delete h.treasurer[k];(h.tesLog=h.tesLog||[]).push({by,at:stamp(),month:k,from,to});}
+
+/* Deudas de un gasto. El acreedor queda guardado en el gasto al registrarlo:
+   fijo -> tesorero de ese momento; puntual -> quien compró */
+function debtsOf(home,e){
+  if(e.void||!e.creditor) return [];
+  const shares=splitCents(e.amount,e.participants,e.creditor);
+  return e.participants.filter(id=>id!==e.creditor).map(id=>({exp:e,from:id,to:e.creditor,cents:shares[id],paid:!!e.paid[id],paidAt:e.paid[id]||null,claimed:(!e.paid[id]&&e.claims&&e.claims[id])||null}));
+}
+const monthExpenses=(home,k)=>home.expenses.filter(e=>monthOf(e.date)===k).sort((a,b)=>(a.void?1:0)-(b.void?1:0)||b.date.localeCompare(a.date));
+const monthDebts=(home,k)=>monthExpenses(home,k).flatMap(e=>debtsOf(home,e));
+const allPending=home=>live(home).flatMap(e=>debtsOf(home,e)).filter(d=>!d.paid);
+
+/* Indicador de equidad de aporte: conteo de compras puntuales (desde S/ 5.00), ajustado por días en el hogar */
+function equity(home,k,today){
+  const start=monthStart(k), endM=(iso(today).slice(0,7)===k)?today:monthEnd(k);
+  const rows=home.members.map(m=>{
+    const j=parse(m.joinedAt); const s=j>start?j:start;
+    let e=endM; if(m.leftAt){const l=parse(m.leftAt); if(l<e)e=l;}
+    const days=Math.max(0,dayDiff(s,e)+1);
+    const count=new Set(home.expenses.filter(x=>countsAsAporte(home,x)&&x.payer===m.id&&monthOf(x.date)===k).map(x=>x.date)).size;  /* máximo 1 aporte por día */
+    return {id:m.id,name:m.name,days,count};
+  }).filter(r=>r.days>0);
+  const total=rows.reduce((a,r)=>a+r.count,0), totDays=rows.reduce((a,r)=>a+r.days,0);
+  rows.forEach(r=>{
+    r.expected= total? total*r.days/totDays : 0;
+    r.ratio= total? r.count/r.expected : null;
+    r.status= r.ratio===null?'neu':(total<MIN_COMPRAS?'few':(r.ratio<ALERTA?'bad':(r.ratio<BAJO?'warn':'ok')));
+    r.rate= r.count/r.days;
+  });
+  const endIso=iso(endM), stay=rows.filter(r=>isActive(memberById(home,r.id),endIso));
+  const pool=stay.length?stay:rows, min=Math.min(...pool.map(r=>r.rate));
+  const suggest=pool.filter(r=>Math.abs(r.rate-min)<1e-9);   /* si hay empate se sugieren todos los empatados */
+  return {rows,total,avg: rows.length? total/rows.length:0,suggest};
+}
+function balances(home,k){
+  const b={}; home.members.forEach(m=>b[m.id]={owes:0,owed:0});
+  monthDebts(home,k).forEach(d=>{ if(!d.paid){ b[d.from].owes+=d.cents; b[d.to].owed+=d.cents; } });
+  return b;
+}
+const memberById=(home,id)=>home.members.find(m=>m.id===id)||{name:'?',yape:'-'};
+const concept=d=>d.exp.type==='fijo'?('la cuota de '+d.exp.cat.toLowerCase()+' de '+monthName(monthOf(d.exp.date))):('"'+d.exp.desc+'" ('+ddmm(d.exp.date)+')');
+const reminderText=(home,d)=>{
+  const from=memberById(home,d.from).name, to=memberById(home,d.to);
+  return 'Hola '+from+', Roomly te recuerda que tienes un pago pendiente de '+fmt(d.cents)+' a '+to.name+' por '+concept(d)+'.\nPuedes pagar por Yape o Plin al '+to.yape+'.\nMensaje generado automáticamente por Roomly.';
+};
+
+/* ===================== Datos de ejemplo ===================== */
+function seedDemo(today){
+  const M=iso(today).slice(0,7), M1=shiftMonth(M,-1), M2=shiftMonth(M,-2);
+  const td=today.getDate();
+  const joined=M2+'-01';
+  const members=[
+    {id:'f',name:'Fernando',pin:'1111',yape:'987 654 321',joinedAt:joined},
+    {id:'g',name:'Gustavo',pin:'2222',yape:'976 543 210',joinedAt:joined},
+    {id:'d',name:'Dayra',pin:'3333',yape:'965 432 109',joinedAt:joined},
+    {id:'m',name:'Mauricio',pin:'4444',yape:'954 321 098',joinedAt:joined},
+  ];
+  const all=['f','g','d','m'];
+  const ex=[];
+  const dayIn=(k,day)=>k+'-'+pad(k===M?Math.min(day,td):day);
+  const paidAll=(parts,cred,date)=>Object.fromEntries(parts.filter(p=>p!==cred).map(p=>[p,date]));
+  const fijos={[M2]:[2400,120,168.30,81.00,41.20],[M1]:[2400,120,172.90,79.20,44.80],[M]:[2400,120,186.40,84.60,46.50]};
+  const fDay=[1,3,5,5,6];
+  const tes={[M2]:'d',[M1]:'m',[M]:'g'};
+  [M2,M1,M].forEach(k=>{
+    CAT_FIJO.forEach((c,i)=>{
+      const date=dayIn(k,fDay[i]);
+      const e={id:uid(),type:'fijo',cat:c,desc:c,amount:Math.round(fijos[k][i]*100),date,payer:null,creditor:tes[k],by:tes[k],participants:all.slice(),paid:{},log:[{by:tes[k],at:date+' 09:00',txt:'Registró el gasto'}]};
+      if(k!==M) e.paid=paidAll(all,tes[k],k+'-10');
+      ex.push(e);
+    });
+  });
+  const cur=ex.filter(e=>monthOf(e.date)===M);
+  const setPaid=(cat,ids)=>{const e=cur.find(x=>x.cat===cat);ids.forEach(i=>e.paid[i]=e.date)};
+  cur.find(x=>x.cat==='Luz').claims={m:iso(today)};
+  setPaid('Alquiler',['d','m','f']); setPaid('Internet',['d','f','m']); setPaid('Luz',['d']); setPaid('Gas',['m']);
+  const fr=f=>Math.max(1,Math.min(td,Math.round(td*f)));
+  const used={};  /* si el mes recién empieza, evita que la misma persona tenga dos compras el mismo día */
+  const dayFor=(payer,f)=>{const u=used[payer]=used[payer]||new Set();let d=fr(f);
+    if(u.has(d))for(let k=1;k<td;k++){if(d-k>=1&&!u.has(d-k)){d-=k;break}if(d+k<=td&&!u.has(d+k)){d+=k;break}}
+    u.add(d);return d};
+  const P=(payer,desc,cat,amt,f,parts,paid)=>{const date=M+'-'+pad(dayFor(payer,f));ex.push({id:uid(),type:'puntual',cat,desc,amount:Math.round(amt*100),date,payer,creditor:payer,by:payer,participants:parts||all.slice(),paid:Object.fromEntries((paid||[]).map(p=>[p,date])),log:[{by:payer,at:date+' 19:30',txt:'Registró el gasto'}]})};
+  P('d','Detergente y lejía','Limpieza',18.90,.10,null,['g','m','f']);
+  P('m','Esponjas y lavavajilla','Limpieza',12.40,.20,null,['g','d']);
+  P('f','Shampoo y jabón','Baño',24.60,.30,['f','m'],['m']);
+  P('f','Lavavajilla','Limpieza',9.90,.40,null,['g']);
+  P('d','Papel higiénico x12','Baño',21.50,.45,null,['m']);
+  P('m','Bolsas de basura','Limpieza',9.90,.55,null,['d','f']);
+  P('g','Ambientador','Baño',8.50,.60,null,['d']);
+  P('f','Escoba y recogedor','Limpieza',14.90,.70,null,[]);
+  P('d','Aceite y sal','Cocina',15.80,.85,null,[]);
+  P('m','Arroz 5 kg','Cocina',22.50,.92,null,[]);
+  const items=[['Detergente','Limpieza',17.50],['Papel higiénico x12','Baño',21.00],['Lavavajilla','Limpieza',8.90],['Aceite','Cocina',12.60],['Bolsas de basura','Limpieza',9.50],['Azúcar y café','Cocina',19.80],['Jabón líquido','Baño',11.40],['Lejía','Limpieza',6.90],['Arroz 5 kg','Cocina',21.90],['Esponjas','Limpieza',5.50]];
+  const plan={[M1]:{g:3,d:2,m:3,f:2},[M2]:{g:2,d:3,m:2,f:3}};
+  let n=0;
+  [M2,M1].forEach(k=>{Object.entries(plan[k]).forEach(([p,c])=>{for(let i=0;i<c;i++){const it=items[n%items.length];n++;const date=k+'-'+pad(2+((n*3)%26));
+    ex.push({id:uid(),type:'puntual',cat:it[1],desc:it[0],amount:Math.round(it[2]*100),date,payer:p,creditor:p,by:p,participants:all.slice(),paid:paidAll(all,p,date),log:[{by:p,at:date+' 19:30',txt:'Registró el gasto'}]});}})});
+  return {code:'RMLY26',name:'Depa Monterrico',demo:true,seededFor:M,members,treasurer:tes,expenses:ex,manual:{},tesLog:[]};
+}
+
+/* ===================== Estado y almacenamiento ===================== */
+const KEY='roomly-mvp-v3';
+let store={homes:{},session:null};
+function load(){if(CLOUD)return;try{const s=localStorage.getItem(KEY);if(s)store=JSON.parse(s)}catch(e){} if(!store.homes)store.homes={}; if(!store.homes.RMLY26){store.homes.RMLY26=seedDemo(new Date())}}
+function save(){if(CLOUD){cloudSave();return}try{localStorage.setItem(KEY,JSON.stringify(store))}catch(e){}}
+load();
+const today=new Date(); today.setHours(0,0,0,0);
+const CUR=iso(today).slice(0,7), MIN_FREE=shiftMonth(CUR,-1);  /* plan gratuito: mes actual y anterior */
+let ui={tab:'inicio',month:CUR,filter:'todos',login:{code:store.session?.code||'',step:store.session?'pin':'code'}};
+const home=()=>store.session?store.homes[store.session.code]:null;
+const me=()=>home()?memberById(home(),store.session.memberId):null;
+const colorOf=id=>{const h=home();const i=h?h.members.findIndex(m=>m.id===id):0;return COLORS[(i<0?0:i)%COLORS.length]};
+const av=(id,name)=>'<span class="avatar" style="background:'+colorOf(id)+'">'+esc(name[0]||'?')+'</span>';
+
+/* ===================== Interfaz ===================== */
+const $app=document.getElementById('app');
+function toast(t){const el=document.getElementById('toast');el.textContent=t;el.hidden=false;clearTimeout(toast.t);toast.t=setTimeout(()=>el.hidden=true,2400)}
+async function copy(text){try{await navigator.clipboard.writeText(text);toast('Copiado')}catch(e){toast('No se pudo copiar; selecciona el texto')}}
+const lockIcon='<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="color:var(--brand);flex:none" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>';
+const premiumBox=(title,text)=>'<section class="lock">'+lockIcon+'<div style="display:flex;flex-direction:column;gap:6px"><b>'+title+'</b><span class="small muted">'+text+'</span><span class="pill neu" style="align-self:flex-start">Plan Premium · S/ 12.90 al mes por hogar</span></div></section>';
+
+function render(){
+  if(!home()||!me()){CLOUD?renderCloud():renderLogin();return}
+  const h=home(), m=me();
+  const isCur=ui.month===CUR;
+  let body='';
+  if(ui.tab==='inicio')body=viewInicio();
+  else if(ui.tab==='gastos')body=viewGastos();
+  else if(ui.tab==='equidad')body=viewEquidad();
+  else if(ui.tab==='ajustes')body=viewAjustes();
+  else if(ui.tab==='pruebas')body=viewPruebas();
+  const showMonth=['inicio','gastos','equidad'].includes(ui.tab);
+  const atMin=ui.month<=MIN_FREE;
+  $app.innerHTML=
+   '<header class="top"><div class="wrap"><div class="top-row"><div><div class="logo">Roomly</div><small>'+esc(h.name)+' · código '+esc(h.code)+'</small></div>'+
+   '<button class="who" data-a="switch" aria-label="Cambiar de roommate">'+esc(m.name)+' ⇄</button></div>'+
+   (showMonth?'<div class="month"><button data-a="prev" aria-label="Mes anterior">‹</button><span>'+monthName(ui.month)+(isCur?' (actual)':'')+'</span><button data-a="next" aria-label="Mes siguiente"'+(isCur?' disabled style="opacity:.35"':'')+'>›</button></div>':'')+
+   '</div></header><main class="wrap">'+(showMonth&&ui.month<MIN_FREE?viewLocked():body)+'</main>'+
+   '<nav class="tabs" aria-label="Secciones"><div class="in">'+
+   tabBtn('inicio','Inicio','M3 10.5 12 3l9 7.5V21h-6v-6H9v6H3z')+tabBtn('gastos','Gastos','M5 4h14v16l-3-2-2 2-2-2-2 2-2-2-3 2zM8 9h8M8 13h6')+
+   '<button class="add" data-a="new" aria-label="Registrar gasto"><span class="plus">+</span><em>Registrar</em></button>'+
+   tabBtn('equidad','Equidad','M4 20V10M10 20V4M16 20v-7M22 20H2')+tabBtn('ajustes','Ajustes','M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM19 12l2-1-1-3-2 .2-1.5-1.5L16.7 4l-3-1-1 2h-1.4l-1-2-3 1 .2 2.2L6 7.7 4 7.5 3 10.5l2 1v1.4l-2 1 1 3 2.2-.2 1.5 1.5L7.5 20l3 1 1-2h1.4l1 2 3-1-.2-2.2 1.5-1.5 2.2.2 1-3-2-1z')+
+   '</div></nav>';
+}
+function viewLocked(){
+  return premiumBox('Historial de '+monthName(ui.month),'El plan gratuito muestra el mes actual y el anterior, para que puedan cerrar sus pagos pendientes. El historial completo y los reportes son parte del plan Premium.')+
+    '<button class="btn sec" data-a="goCur">Volver a '+monthName(CUR)+'</button>';
+}
+function tabBtn(id,label,path){
+  const cur=ui.tab===id||(id==='ajustes'&&ui.tab==='pruebas');
+  return '<button data-a="tab" data-v="'+id+'"'+(cur?' aria-current="page"':'')+'><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round" aria-hidden="true"><path d="'+path+'"/></svg>'+label+'</button>';
+}
+const ageOf=d=>dayDiff(parse(d.exp.date),today);
+
+function viewInicio(){
+  const h=home(), m=me(), k=ui.month;
+  const pend=allPending(h);
+  const mine=pend.filter(d=>d.from===m.id).sort((a,b)=>ageOf(b)-ageOf(a));
+  const owed=pend.filter(d=>d.to===m.id).sort((a,b)=>a.exp.date.localeCompare(b.exp.date));
+  const eq=equity(h,k,today), bal=balances(h,k);
+  const myRow=eq.rows.find(r=>r.id===m.id);
+  const sumC=a=>a.reduce((s,d)=>s+d.cents,0);
+  const lbl=d=>d.exp.type==='fijo'?d.exp.cat+' de '+MESES[Number(monthOf(d.exp.date).slice(5))-1]:d.exp.desc;
+  const pl=(n,w)=>n+' '+w+(n===1?'':'s');
+  let html='';
+  if(h.demo){const sf=h.seededFor||h.expenses.reduce((a,e)=>monthOf(e.date)>a?monthOf(e.date):a,'');
+    html+=sf&&sf<CUR?'<div class="alert bad small"><b>Los datos de ejemplo son de '+monthName(sf)+'.</b><span>Actualízalos antes de presentar para que el mes actual tenga gastos.</span><button class="btn sm" style="align-self:flex-start" data-a="askReset">Actualizar datos de ejemplo</button></div>'
+      :'<div class="alert info small"><span><b>Datos de ejemplo.</b> Hogar de demostración para la sustentación.</span></div>';}
+  /* Lo esencial primero: cuánto debo, cuánto me deben y a quién le toca comprar */
+  html+='<section class="card"><div class="row"><h2>Tu balance</h2><span class="label">Pendiente a la fecha</span></div><div class="tiles">'+
+    '<div class="tile"><span class="small muted">Debes</span><b class="num" style="color:var(--danger)">'+fmt(sumC(mine))+'</b><span class="small muted">'+pl(mine.length,'pago')+' por hacer</span></div>'+
+    '<div class="tile"><span class="small muted">Te deben</span><b class="num" style="color:var(--ok)">'+fmt(sumC(owed))+'</b><span class="small muted">'+pl(owed.length,'pago')+' por cobrar</span></div></div></section>';
+  const names=eq.suggest.map(r=>r.name);
+  const turnTxt= eq.total===0? 'Nadie ha registrado compras este mes. Cualquiera puede empezar.' : (names.length>1? 'Hay empate con el menor aporte del mes.' : 'Tiene el menor número de compras del mes.');
+  html+='<section class="turn"><span class="small" style="opacity:.85">Próxima compra para la casa: le toca a</span><b>'+esc(names.join(' o '))+'</b><span class="small" style="opacity:.85">'+turnTxt+' Es una sugerencia, no una obligación.</span></section>';
+  if(myRow&&myRow.status==='bad') html+='<div class="alert bad"><b>Tu aporte está por debajo del promedio</b><span class="small">Este mes sumas '+pl(myRow.count,'compra')+' para la casa; el promedio del hogar es '+eq.avg.toFixed(1).replace('.',',')+'. Te toca comprar lo que falte en casa.</span></div>';
+  /* Aviso automático para el deudor */
+  if(mine.length){
+    const late=mine.some(d=>!d.claimed&&ageOf(d)>DIAS_AVISO);
+    html+='<section class="card notice"><div class="row"><h3>Avisos de Roomly</h3><span class="pill '+(late?'bad':'warn')+'">'+pl(mine.length,'pendiente')+'</span></div><div class="list">'+
+     mine.map(d=>{const to=memberById(h,d.to);const age=ageOf(d);return '<div class="item"><div style="min-width:0;flex:1"><p class="small">Debes <b class="num">'+fmt(d.cents)+'</b> a <b>'+esc(to.name)+'</b> por '+esc(concept(d))+'. Yape/Plin: <b class="num">'+esc(to.yape)+'</b>.</p>'+
+       (d.claimed?'<span class="pill neu" style="margin-top:6px">Por confirmar: avisaste que pagaste el '+ddmm(d.claimed)+'</span>':(age>DIAS_AVISO?'<span class="pill bad" style="margin-top:6px">Atrasado: '+age+' días</span>':''))+
+       '</div><div class="acts">'+(d.claimed?'':'<button class="btn sm" data-a="claim" data-e="'+d.exp.id+'">Ya pagué</button>')+'<button class="btn sec sm" data-a="copy" data-v="'+esc(to.yape.replace(/\s/g,''))+'">Copiar n.º</button></div></div>'}).join('')+
+     '</div><p class="small muted">Aviso automático dentro de la app. Cuando pagues, toca «Ya pagué» y quien recibe lo confirma.</p></section>';
+  }
+  /* Te deben: todo lo pendiente, de cualquier mes, agrupado por persona */
+  const groups={}; owed.forEach(d=>{(groups[d.from]=groups[d.from]||[]).push(d)});
+  html+='<section class="card"><h3>Te deben</h3>'+(owed.length?'<div class="list">'+Object.entries(groups).map(([id,ds])=>{const fr=memberById(h,id);const nc=ds.filter(d=>d.claimed).length;
+    return '<details class="item grp"'+(ui.open===id?' open':'')+' data-g="'+id+'"><summary><div class="who-line">'+av(id,fr.name)+'<div style="min-width:0"><b>'+esc(fr.name)+'</b> te debe <b class="num">'+fmt(sumC(ds))+'</b><div class="small muted">'+pl(ds.length,'concepto')+(nc?' · '+nc+' por confirmar':'')+' · toca para ver el detalle</div></div></div><span class="chev" aria-hidden="true">▾</span></summary><div class="sub">'+
+     ds.map(d=>'<div class="row sub-item"><div style="min-width:0"><div class="small"><b class="num">'+fmt(d.cents)+'</b> · '+esc(lbl(d))+'</div><div class="small muted">'+ddmm(d.exp.date)+(!d.claimed&&ageOf(d)>DIAS_AVISO?' · atrasado '+ageOf(d)+' días':'')+'</div>'+(d.claimed?'<span class="pill warn" style="margin-top:4px">Dice que pagó el '+ddmm(d.claimed)+'</span>':'')+'</div>'+
+       '<div class="acts"><button class="btn sm" data-a="pay" data-e="'+d.exp.id+'" data-u="'+d.from+'">'+(d.claimed?'Confirmar':'Recibido')+'</button>'+(d.claimed?'<button class="btn ghost sm" data-a="reject" data-e="'+d.exp.id+'" data-u="'+d.from+'">No lo recibí</button>':'')+'</div></div>').join('')+
+     (ds.length>nc?'<button class="btn ghost sm" data-a="remind" data-u="'+id+'">Enviar recordatorio por WhatsApp (opcional)</button>':'')+'</div></details>'}).join('')+
+    '</div><p class="small muted">Incluye pagos pendientes de meses anteriores. Roomly ya le muestra un aviso a cada persona que te debe.</p>':'<p class="muted small">Nadie te debe nada.</p>')+'</section>';
+  html+='<section class="card"><h3>Balance del hogar · '+monthName(k)+'</h3><div class="list">'+h.members.filter(x=>eq.rows.some(r=>r.id===x.id)||bal[x.id].owes||bal[x.id].owed).map(x=>{const b=bal[x.id];const net=b.owed-b.owes;return '<div class="item"><div class="who-line">'+av(x.id,x.name)+'<span>'+esc(x.name)+(x.id===m.id?' (tú)':'')+(h.treasurer[k]===x.id?' <span class="pill neu">Tesorero</span>':'')+(x.leftAt?' <span class="pill neu">Salió '+ddmm(x.leftAt)+'</span>':'')+'</span></div><span class="num" style="font-weight:600;color:'+(net<0?'var(--danger)':net>0?'var(--ok)':'var(--muted)')+'">'+(net>0?'+':'')+fmt(net)+'</span></div>'}).join('')+'</div><p class="small muted">Positivo: le deben. Negativo: debe. Solo cuenta pagos pendientes de '+monthName(k)+'.</p></section>';
+  html+='<section class="card"><div class="row"><h3>Indicador de equidad</h3><button class="btn ghost sm" data-a="tab" data-v="equidad">Ver detalle</button></div>'+equityBars(eq)+'</section>';
+  return html;
+}
+function statusPill(r){
+  if(r.status==='neu')return '<span class="pill neu">Sin compras aún</span>';
+  if(r.status==='few')return '<span class="pill neu">Pocos datos</span>';
+  const t={ok:'Equilibrado',warn:'Por debajo',bad:'Alerta'}[r.status];
+  return '<span class="pill '+r.status+'"><span class="dot"></span>'+t+'</span>';
+}
+function equityBars(eq){
+  const max=Math.max(1,...eq.rows.map(r=>Math.max(r.count,r.expected)));
+  const col={ok:'var(--ok)',warn:'var(--warn)',bad:'var(--danger)',neu:'var(--muted)',few:'var(--muted)'};
+  return '<div class="bars">'+eq.rows.map(r=>'<div class="bar-row"><span style="font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(r.name)+'</span><div class="bar" role="img" aria-label="'+esc(r.name)+': '+r.count+' compras, esperado '+r.expected.toFixed(1)+'"><i style="width:'+(r.count/max*100)+'%;background:'+col[r.status]+'"></i>'+(eq.total?'<span class="exp" style="left:calc('+(r.expected/max*100)+'% - 1px)"></span>':'')+'</div><span class="num small"><b>'+r.count+'</b> '+statusPill(r)+'</span></div>').join('')+'</div><p class="small muted">Barra: compras registradas. Línea: lo esperado según los días de cada uno en el hogar.'+(eq.total&&eq.total<MIN_COMPRAS?' El semáforo se activa cuando el hogar suma '+MIN_COMPRAS+' compras en el mes.':'')+'</p>';
+}
+
+function viewGastos(){
+  const h=home(), m=me(), k=ui.month;
+  let list=monthExpenses(h,k); if(ui.filter!=='todos')list=list.filter(e=>e.type===ui.filter);
+  const tot=a=>a.filter(e=>!e.void).reduce((s,e)=>s+e.amount,0);
+  const all=monthExpenses(h,k);
+  let html='<section class="card"><div class="tiles"><div class="tile"><span class="small muted">Gastos fijos</span><b class="num">'+fmt(tot(all.filter(e=>e.type==='fijo')))+'</b></div><div class="tile"><span class="small muted">Compras puntuales</span><b class="num">'+fmt(tot(all.filter(e=>e.type==='puntual')))+'</b></div></div>'+
+   '<div class="seg" role="group" aria-label="Filtro">'+[['todos','Todos'],['fijo','Fijos'],['puntual','Puntuales']].map(([v,t])=>'<button data-a="filter" data-v="'+v+'" aria-pressed="'+(ui.filter===v)+'">'+t+'</button>').join('')+'</div></section>';
+  html+=h.demo?'<section class="card"><div class="row"><h3>Reporte del mes en Excel</h3><span class="pill neu">Premium</span></div><p class="small muted">Gastos, pagos, balance e indicador de equidad de '+monthName(k)+' en un archivo .xlsx. Es una función Premium; en el hogar de demostración está habilitada para mostrarla.</p><button class="btn sec" data-a="xlsMes">Descargar reporte (Excel)</button></section>'
+    :premiumBox('Reporte del mes en Excel','Descarga los gastos, pagos, balance e indicador del mes en un archivo .xlsx.');
+  if(!list.length)html+='<section class="card"><p class="muted">No hay gastos registrados en '+monthName(k)+'. Usa <b>Registrar</b> para agregar el primero.</p></section>';
+  const dupDay=new Set(), seen={};
+  h.expenses.forEach(x=>{if(countsAsAporte(h,x)){const key=x.payer+x.date;if(seen[key])dupDay.add(x.id);else seen[key]=1}});
+  list.forEach(e=>{
+    const shares=splitCents(e.amount,e.participants,e.creditor);
+    const other=e.participants.find(p=>p!==e.creditor)||e.participants[0];
+    const cr=e.creditor?memberById(h,e.creditor):null;
+    const mineE=canEditExp(h,e,m.id);
+    const title=e.type==='fijo'?e.cat+' de '+MESES[Number(k.slice(5))-1]:e.desc;
+    const last=e.log&&e.log.length>1?e.log[e.log.length-1]:null;
+    html+='<section class="card flat'+(e.void?' void':'')+'"><div class="row"><div style="min-width:0"><div class="label">'+(e.type==='fijo'?'Fijo':'Puntual')+' · '+esc(e.cat)+' · '+ddmm(e.date)+'</div><h3 style="margin-top:2px">'+esc(title)+'</h3></div><b class="num" style="font-family:var(--display);font-size:18px">'+fmt(e.amount)+'</b></div>';
+    if(e.void){html+='<span class="pill neu" style="align-self:flex-start">Anulado por '+esc(memberById(h,e.void.by).name)+' el '+dmy(e.void.at.slice(0,10))+'</span><p class="small muted">No cuenta en el balance ni en el indicador. Se conserva como registro.</p></section>';return}
+    html+='<p class="small muted">'+(e.type==='fijo'?('Cuota por persona: '+fmt(shares[other])+'. Cobra '+esc(cr.name)+' (tesorero, Yape/Plin '+esc(cr.yape)+')'):('Compró '+esc(cr.name)+' · se divide entre '+e.participants.length+' · '+fmt(shares[other])+' c/u · Yape/Plin '+esc(cr.yape)))+'</p>';
+    if(e.type==='puntual'){const why=whyNoAporte(h,e)||(dupDay.has(e.id)?'No suma al indicador: ese día '+esc(cr.name)+' ya sumó un aporte':'');if(why)html+='<span class="pill neu" style="align-self:flex-start">'+why+'</span>';}
+    html+='<div class="chips">'+e.participants.map(p=>{const pm=memberById(h,p);if(p===e.creditor)return '<span class="chip">'+esc(pm.name)+' · '+(e.type==='fijo'?'tesorero':'compró')+'</span>';const paid=!!e.paid[p];const can=m.id===e.creditor;return (can?'<button class="chip '+(paid?'paid':'due')+'" data-a="toggle" data-e="'+e.id+'" data-u="'+p+'" aria-label="'+(paid?'Marcar pendiente':'Marcar pagado')+' '+esc(pm.name)+'">':'<span class="chip '+(paid?'paid':'due')+'">')+esc(pm.name)+' · '+(paid?'pagó':(e.claims&&e.claims[p]?'por confirmar':'pendiente'))+(can?'</button>':'</span>')}).join('')+'</div>';
+    if(m.id===e.creditor)html+='<p class="small muted">Toca a una persona para confirmar que recibiste su pago.</p>';
+    html+='<div class="row" style="justify-content:flex-start;flex-wrap:wrap"><span class="small muted">Registró '+esc(memberById(h,e.by).name)+(last?' · '+esc(last.txt.toLowerCase())+' el '+dmy(last.at.slice(0,10)):'')+'</span>'+
+      (mineE?'<span style="flex:1"></span><button class="btn sec sm" data-a="edit" data-e="'+e.id+'">Editar</button>'+(canVoid(e)?'<button class="btn danger sm" data-a="askVoid" data-e="'+e.id+'">Anular</button>':''):'')+'</div>'+
+      (mineE&&!canVoid(e)?'<p class="small muted">Tiene pagos confirmados o avisados, por eso no se puede anular. Si hay que corregirlo, primero desmarca esos pagos.</p>':'')+
+      (mineE&&e.by!==m.id?'<p class="small muted">Puedes corregirlo porque eres tesorero de este mes y '+esc(memberById(h,e.by).name)+' ya no vive en el hogar.</p>':'')+'</section>';
+  });
+  return html;
+}
+
+function viewEquidad(){
+  const h=home(), k=ui.month, eq=equity(h,k,today);
+  let html='<section class="card"><h2>Indicador de equidad de aporte</h2><p class="small muted">Cuenta cuántas veces cada conviviente compró algo para la casa en '+monthName(k)+'. No mide montos: mide quién se encarga de comprar. Cuenta una compra si es para todo el hogar y cuesta desde '+fmt(MIN_APORTE)+', con máximo una por persona por día.</p>'+equityBars(eq)+'</section>';
+  const names=eq.suggest.map(r=>r.name);
+  html+='<section class="turn"><span class="small" style="opacity:.85">Sugerencia de turno</span><b>'+esc(names.join(' o '))+'</b><span class="small" style="opacity:.85">'+(eq.total===0?'Hogar sin compras este mes: todos empiezan en cero.':(names.length>1?'Empate: tienen el menor aporte del mes.':'Tiene el menor aporte en proporción a sus días en el hogar.'))+'</span></section>';
+  html+='<section class="card"><h3>Detalle del mes</h3><div class="scroll-x"><table><thead><tr><th>Conviviente</th><th>Compras</th><th>Días</th><th>Esperado</th><th>% de lo esperado</th></tr></thead><tbody>'+
+   eq.rows.map(r=>'<tr><td>'+esc(r.name)+'</td><td class="num">'+r.count+'</td><td class="num">'+r.days+'</td><td class="num">'+r.expected.toFixed(1)+'</td><td class="num">'+(r.ratio===null?'-':Math.round(r.ratio*100)+'%')+'</td></tr>').join('')+
+   '</tbody></table></div><p class="small muted">Esperado = compras del hogar × días de la persona ÷ días de todos. Alerta: menos del 50% de lo esperado. Por debajo: de 50% a 79%. Equilibrado: desde 80%. El semáforo se activa desde '+MIN_COMPRAS+' compras del hogar en el mes.</p></section>';
+  /* Resumen de varios meses: es historial, por lo tanto Premium según el caso de negocio */
+  const ks=[shiftMonth(k,-2),shiftMonth(k,-1),k];
+  const hist=ks.map(x=>equity(h,x,today));
+  html+='<section class="card"><div class="row"><h3>Resumen de los últimos 3 meses</h3><span class="pill neu">Premium</span></div><div class="scroll-x blur" aria-hidden="true"><table><thead><tr><th>Conviviente</th>'+ks.map(x=>'<th>'+MESES[Number(x.slice(5))-1].slice(0,3)+'</th>').join('')+'<th>Total</th></tr></thead><tbody>'+
+   h.members.map(mm=>{const cs=hist.map(e=>{const r=e.rows.find(r=>r.id===mm.id);return r?r.count:0});return '<tr><td>'+esc(mm.name)+'</td>'+cs.map(c=>'<td class="num">'+c+'</td>').join('')+'<td class="num"><b>'+cs.reduce((a,b)=>a+b,0)+'</b></td></tr>'}).join('')+
+   '</tbody></table></div></section>';
+  html+=premiumBox('Historial y reportes','El registro de gastos y el indicador de equidad son gratis. El resumen de varios meses, las tendencias por persona y los reportes son parte del plan de suscripción por hogar.');
+  return html;
+}
+
+const tesLogHtml=h=>{const L=(h.tesLog||[]).slice(-5).reverse();return L.length?'<div class="small muted"><b>Últimos cambios de tesorero</b><br>'+L.map(x=>dmy(x.at.slice(0,10))+' '+x.at.slice(11)+' · '+esc(memberById(h,x.by).name)+' asignó a '+(x.to?esc(memberById(h,x.to).name):'nadie')+' para '+monthName(x.month)+(x.from?' (antes: '+esc(memberById(h,x.from).name)+')':'')).join('<br>')+'</div>':''};
+function viewAjustes(){
+  const h=home(), m=me();
+  const tk=ui.tesMonth||CUR;
+  let html='<section class="card"><h2>Tesorero por mes</h2><p class="small muted">El hogar lo elige por consenso fuera de la app; aquí se registra quién cobra las cuotas fijas de cada mes. Cambiarlo solo afecta los gastos fijos que se registren después: los ya registrados siguen a nombre de quien era tesorero.</p>'+
+   '<div class="field"><label for="tesMonth">Mes</label><input id="tesMonth" type="month" value="'+tk+'" min="'+MIN_FREE+'" max="'+shiftMonth(CUR,1)+'"></div>'+
+   '<div class="field"><label for="tes">Tesorero de '+monthName(tk)+'</label><select id="tes">'+'<option value="">Sin asignar</option>'+h.members.filter(x=>!x.leftAt||x.leftAt>=tk+'-01').map(x=>'<option value="'+x.id+'"'+(h.treasurer[tk]===x.id?' selected':'')+'>'+esc(x.name)+'</option>').join('')+'</select></div>'+tesLogHtml(h)+'</section>';
+  html+='<section class="card"><h2>Mis datos de cobro</h2><div class="field"><label for="yape">Número Yape / Plin</label><input id="yape" inputmode="tel" value="'+esc(m.yape)+'" maxlength="15"></div><span class="err" id="yapeErr"></span><button class="btn" data-a="saveYape">Guardar número</button></section>';
+  html+='<section class="card"><h2>Convivientes</h2><div class="list">'+h.members.map(x=>'<div class="item"><div class="who-line">'+av(x.id,x.name)+'<div style="min-width:0"><b>'+esc(x.name)+'</b><div class="small muted">Ingresó el '+dmy(x.joinedAt)+(x.leftAt?' · salió el '+dmy(x.leftAt):'')+(CLOUD&&!x.userId?' · aún no entra a la app':'')+'</div></div></div>'+(x.leftAt?'<span class="pill neu">Ya no vive aquí</span>':'<button class="btn sec sm" data-a="askLeave" data-u="'+x.id+'">Registrar salida</button>')+'</div><div id="leave-'+x.id+'"></div>').join('')+'</div>'+
+   '<details><summary style="cursor:pointer;font-weight:600;color:var(--brand)">Agregar conviviente</summary><div style="display:flex;flex-direction:column;gap:10px;margin-top:10px">'+
+   '<div class="field"><label for="nmName">Nombre</label><input id="nmName" maxlength="20"></div>'+
+   (CLOUD?'<span class="small muted">Luego esa persona crea su cuenta, toca «Unirme a un hogar» con el código <b>'+esc(h.code)+'</b> y elige su nombre.</span>':'<div class="field"><label for="nmPin">PIN de 4 dígitos</label><input id="nmPin" inputmode="numeric" maxlength="4"></div>')+
+   '<div class="field"><label for="nmYape">Yape / Plin</label><input id="nmYape" inputmode="tel" maxlength="15"></div>'+
+   '<div class="field"><label for="nmDate">Fecha de ingreso al hogar</label><input id="nmDate" type="date" value="'+iso(today)+'"></div>'+
+   '<span class="err" id="nmErr"></span><button class="btn" data-a="addMember">Agregar</button></div></details></section>';
+  html+='<section class="card"><h2>Calidad</h2><p class="small muted">Pruebas automáticas y registro de pruebas manuales del plan de gestión de calidad.</p><button class="btn sec" data-a="tab" data-v="pruebas">Abrir pruebas de calidad</button></section>';
+  html+='<section class="card"><h2>Sesión</h2><p class="small muted">Código del hogar para invitar: <b class="num">'+esc(h.code)+'</b>'+(CLOUD?'<br>Conectado como '+esc(cs.user.email||''):'')+'</p><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn sec" data-a="copy" data-v="'+esc(h.code)+'">Copiar código</button>'+(CLOUD?'<button class="btn sec" data-a="cHomes">Cambiar de hogar</button>':'')+'<button class="btn sec" data-a="logout">Cerrar sesión</button></div>'+
+   (h.demo?'<div id="resetBox"><button class="btn danger" data-a="askReset">Restablecer datos de ejemplo</button></div>':'')+'</section>';
+  return html;
+}
+
+/* ===================== Pruebas de calidad ===================== */
+let lastTests=null;
+const raf=()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));
+async function runTests(){
+  const T=[];
+  const fx=()=>({code:'TEST01',name:'Prueba',members:[{id:'a',name:'Ana',pin:'1234',yape:'900000001',joinedAt:'2026-11-01'},{id:'b',name:'Beto',pin:'1234',yape:'900000002',joinedAt:'2026-11-01'},{id:'c',name:'Caro',pin:'1234',yape:'900000003',joinedAt:'2026-11-01'}],treasurer:{'2026-11':'a'},expenses:[]});
+  const t30=parse('2026-11-30');
+  const E=(o)=>Object.assign({id:uid(),cat:'Cocina',desc:'x',paid:{},log:[],by:o.payer||o.creditor},o);
+  const add=(name,ok,detail,esperado,obtenido)=>T.push({name,ok,detail,esperado,obtenido,req:REQ_AUTO[name]||'-'});
+  const tryT=(name,fn)=>{try{fn()}catch(e){add(name,false,String(e),'-','error')}};
+  tryT('Alta de usuario',()=>{const h=fx();const r=addMemberTo(h,{name:'Dani',pin:'4321',yape:'900000004',joinedAt:'2026-11-10'});const bad=addMemberTo(h,{name:'',pin:'12',yape:'',joinedAt:'2026-11-10'});
+    add('Alta de usuario',r.ok&&h.members.length===4&&!bad.ok,'Se agrega un conviviente válido y se rechaza uno sin nombre ni PIN de 4 dígitos.','4 convivientes; registro inválido rechazado',h.members.length+' convivientes; inválido '+(bad.ok?'aceptado':'rechazado'));});
+  tryT('Gasto fijo en partes iguales',()=>{const h=fx();const e=E({type:'fijo',cat:'Luz',amount:10000,date:'2026-11-05',creditor:'a',participants:['a','b','c']});h.expenses.push(e);
+    const s=splitCents(10000,['a','b','c']);const d=debtsOf(h,e);const sum=Object.values(s).reduce((x,y)=>x+y,0);
+    add('Gasto fijo en partes iguales',sum===10000&&d.length===2&&d.every(x=>x.to==='a')&&s.a===3334&&s.b===3333,'S/ 100.00 entre 3: la suma de las cuotas debe dar exactamente el total y la deuda va al tesorero.','33.34 + 33.33 + 33.33 = 100.00; 2 deudas a la tesorera',(s.a/100).toFixed(2)+' + '+(s.b/100).toFixed(2)+' + '+(s.c/100).toFixed(2)+' = '+(sum/100).toFixed(2)+'; '+d.length+' deudas a '+(d[0]&&d[0].to==='a'?'Ana (tesorera)':'otro'));});
+  tryT('Gasto puntual con deuda directa',()=>{const h=fx();h.members.push({id:'d',name:'Dani',pin:'1234',yape:'9',joinedAt:'2026-11-01'});const e=E({type:'puntual',cat:'Limpieza',desc:'Detergente',amount:2000,date:'2026-11-06',payer:'b',creditor:'b',participants:['a','b','c','d']});h.expenses.push(e);
+    const d=debtsOf(h,e);const c=equity(h,'2026-11',t30).rows.find(r=>r.id==='b').count;
+    add('Gasto puntual con deuda directa',d.length===3&&d.every(x=>x.cents===500&&x.to==='b')&&c===1,'S/ 20.00 entre 4, compra Beto: cada uno de los otros 3 le debe S/ 5.00 y su conteo de aportes sube a 1.','3 deudas de 5.00 a Beto; conteo Beto = 1',d.length+' deudas de '+(d[0]?(d[0].cents/100).toFixed(2):'-')+'; conteo Beto = '+c);});
+  tryT('Empate en sugerencia de turno',()=>{const h=fx();const p=(payer,day)=>h.expenses.push(E({type:'puntual',amount:1000,date:'2026-11-'+day,payer,creditor:payer,participants:['a','b','c']}));
+    p('a','03');p('a','08');p('b','10');p('c','12');const s=equity(h,'2026-11',t30).suggest.map(r=>r.name).sort().join(' y ');
+    add('Empate en sugerencia de turno',s==='Beto y Caro','Ana compró 2 veces, Beto y Caro 1 vez cada uno: la app debe sugerir a ambos.','Beto y Caro',s||'ninguno');});
+  tryT('Hogar nuevo sin compras',()=>{const h=fx();const eq=equity(h,'2026-11',t30);add('Hogar nuevo sin compras',eq.suggest.length===3&&eq.rows.every(r=>r.status==='neu'),'Sin compras registradas, nadie queda en alerta y todos pueden empezar.','3 sugeridos, sin alertas',eq.suggest.length+' sugeridos, '+eq.rows.filter(r=>r.status==='bad').length+' alertas');});
+  tryT('Conviviente incorporado a mitad de mes',()=>{const h=fx();h.members.push({id:'n',name:'Nico',pin:'1234',yape:'9',joinedAt:'2026-11-16'});const p=(payer,day)=>h.expenses.push(E({type:'puntual',amount:1000,date:'2026-11-'+day,payer,creditor:payer,participants:activeOn(h,'2026-11-'+day)}));
+    ['02','05','09','12'].forEach(d=>p('a',d));['03','06','10','13'].forEach(d=>p('b',d));['04','07','11','14'].forEach(d=>p('c',d));p('n','20');p('n','25');
+    const n=equity(h,'2026-11',t30).rows.find(r=>r.id==='n');
+    add('Conviviente incorporado a mitad de mes',n.days===15&&n.status==='ok','Nico entró el 16/11 (15 días) e hizo 2 compras; se compara en proporción a sus días y no debe quedar en alerta.','15 días, estado equilibrado',n.days+' días, '+Math.round(n.ratio*100)+'% de lo esperado ('+({ok:'equilibrado',warn:'por debajo',bad:'alerta',neu:'sin datos'}[n.status])+')');});
+  tryT('Compra menor al mínimo',()=>{const h=fx();h.expenses.push(E({type:'puntual',amount:350,date:'2026-11-04',payer:'a',creditor:'a',participants:['a','b','c']}));const eq=equity(h,'2026-11',t30);const d=debtsOf(h,h.expenses[0]);
+    add('Compra menor al mínimo no suma al indicador',eq.rows.find(r=>r.id==='a').count===0&&d.length===2,'Una compra de S/ 3.50 se divide igual, pero no cuenta como aporte porque es menor a S/ 5.00.','Conteo de Ana = 0; 2 deudas generadas','Conteo de Ana = '+eq.rows.find(r=>r.id==='a').count+'; '+d.length+' deudas');});
+  tryT('Gasto anulado',()=>{const h=fx();const e=E({type:'puntual',amount:3000,date:'2026-11-04',payer:'a',creditor:'a',participants:['a','b','c']});h.expenses.push(e);voidExpense(h,e.id,'a');const b=balances(h,'2026-11');
+    add('Gasto anulado sale del balance y del indicador',b.a.owed===0&&equity(h,'2026-11',t30).rows.find(r=>r.id==='a').count===0&&!!e.void,'Al anular una compra de S/ 30.00, Ana deja de tener cobros pendientes y su compra deja de contar; el gasto queda guardado como anulado.','Le deben 0.00; conteo 0; registro conservado','Le deben '+(b.a.owed/100).toFixed(2)+'; conteo '+equity(h,'2026-11',t30).rows.find(r=>r.id==='a').count+'; '+(e.void?'registro conservado':'registro borrado'));});
+  tryT('Cambio de tesorero',()=>{const h=fx();const e=E({type:'fijo',cat:'Agua',amount:9000,date:'2026-11-05',creditor:'a',participants:['a','b','c']});e.paid.b='2026-11-06';h.expenses.push(e);h.treasurer['2026-11']='c';const d=debtsOf(h,e);
+    add('Cambio de tesorero no altera cuotas ya registradas',d.every(x=>x.to==='a')&&d.find(x=>x.from==='b').paid,'Beto ya pagó a Ana; luego el tesorero cambia a Caro. Las cuotas registradas siguen a nombre de Ana y el pago de Beto se mantiene.','Cuotas a Ana; pago de Beto conservado','Cuotas a '+memberById(h,d[0].to).name+'; pago de Beto '+(d.find(x=>x.from==='b').paid?'conservado':'perdido'));});
+  tryT('Salida de conviviente',()=>{const h=fx();h.members[2].leftAt='2026-11-10';const parts=activeOn(h,'2026-11-20');const c=equity(h,'2026-11',t30).rows.find(r=>r.id==='c');
+    add('Conviviente que sale del hogar',!parts.includes('c')&&c.days===10,'Caro sale el 10/11: no entra en gastos posteriores y el indicador solo considera sus 10 días.','No participa desde el 11/11; 10 días','Participa el 20/11: '+(parts.includes('c')?'sí':'no')+'; '+c.days+' días');});
+  tryT('Céntimo',()=>{const h=fx();const e=E({type:'puntual',amount:1000,date:'2026-11-04',payer:'c',creditor:'c',participants:['a','b','c']});h.expenses.push(e);const d=debtsOf(h,e);
+    add('El céntimo sobrante lo asume quien cobra',d.length===2&&d.every(x=>x.cents===333),'S/ 10.00 entre 3, compra Caro: Ana y Beto pagan S/ 3.33 y Caro asume el céntimo que sobra.','Ana 3.33; Beto 3.33','Ana '+(d[0].cents/100).toFixed(2)+'; Beto '+(d[1].cents/100).toFixed(2));});
+  tryT('Pocas',()=>{const h=fx();h.expenses.push(E({type:'puntual',amount:1000,date:'2026-11-02',payer:'a',creditor:'a',participants:['a','b','c']}));const al=equity(h,'2026-11',t30).rows.filter(r=>r.status==='bad').length;
+    add('Pocas compras no activan la alerta',al===0,'Inicio de mes: solo Ana compró 1 vez. Con menos de '+MIN_COMPRAS+' compras en el hogar nadie debe quedar en alerta.','0 personas en alerta',al+' personas en alerta');});
+  tryT('Dia',()=>{const h=fx();for(let i=0;i<3;i++)h.expenses.push(E({type:'puntual',amount:600,date:'2026-11-07',payer:'a',creditor:'a',participants:['a','b','c']}));h.expenses.push(E({type:'puntual',amount:600,date:'2026-11-09',payer:'a',creditor:'a',participants:['a','b','c']}));const c=equity(h,'2026-11',t30).rows.find(r=>r.id==='a').count;
+    add('Máximo un aporte por persona por día',c===2,'Ana registra 3 compras el 07/11 y 1 el 09/11: debe sumar 2 aportes, no 4.','Conteo de Ana = 2','Conteo de Ana = '+c);});
+  tryT('Parte',()=>{const h=fx();h.expenses.push(E({type:'puntual',amount:2000,date:'2026-11-05',payer:'a',creditor:'a',participants:['a','b']}));const c=equity(h,'2026-11',t30).rows.find(r=>r.id==='a').count;const d=debtsOf(h,h.expenses[0]);
+    add('Compra para parte del hogar no suma al indicador',c===0&&d.length===1&&d[0].cents===1000,'Ana compra algo de S/ 20.00 solo para ella y Beto: Beto le debe S/ 10.00, pero no cuenta como aporte al hogar.','Beto debe 10.00; conteo de Ana = 0','Beto debe '+(d[0]?(d[0].cents/100).toFixed(2):'-')+'; conteo de Ana = '+c);});
+  tryT('NoAnular',()=>{const e=E({type:'fijo',cat:'Luz',amount:9000,date:'2026-11-05',creditor:'a',participants:['a','b','c']});const antes=canVoid(e);e.paid.b='2026-11-06';const despues=canVoid(e);
+    add('No se anula un gasto con pagos confirmados',antes&&!despues,'Un gasto sin pagos se puede anular; cuando Beto ya pagó su parte, la opción de anular se bloquea.','Sin pagos: se puede; con pago: bloqueado','Sin pagos: '+(antes?'se puede':'bloqueado')+'; con pago: '+(despues?'se puede':'bloqueado'));});
+  tryT('Confirmar',()=>{const h=fx();const e=E({type:'fijo',cat:'Agua',amount:9000,date:'2026-11-05',creditor:'a',participants:['a','b','c']});h.expenses.push(e);e.claims={b:'2026-11-08'};const d1=debtsOf(h,e).find(x=>x.from==='b');e.paid.b='2026-11-09';delete e.claims.b;const d2=debtsOf(h,e).find(x=>x.from==='b');
+    add('Pago avisado y confirmado',!d1.paid&&!!d1.claimed&&d2.paid,'Beto avisa que pagó y queda por confirmar; cuando Ana lo confirma, pasa a pagado.','Por confirmar → Pagado',(d1.claimed&&!d1.paid?'Por confirmar':'Pendiente')+' → '+(d2.paid?'Pagado':'Pendiente'));});
+  tryT('Salió',()=>{const h=fx();h.members[1].leftAt='2026-11-10';const e=E({type:'puntual',amount:1000,date:'2026-11-05',payer:'b',creditor:'b',participants:['a','b','c']});h.expenses.push(e);const A=canEditExp(h,e,'a'),C=canEditExp(h,e,'c');
+    add('El tesorero corrige gastos de quien ya salió',A&&!C,'Beto registró un gasto y luego salió del hogar: Ana (tesorera) puede corregirlo; Caro no.','Ana puede; Caro no','Ana '+(A?'puede':'no puede')+'; Caro '+(C?'puede':'no puede'));});
+  tryT('TurnoSalio',()=>{const h=fx();h.members[2].leftAt='2026-11-10';const p=(payer,day)=>h.expenses.push(E({type:'puntual',amount:1000,date:'2026-11-'+day,payer,creditor:payer,participants:activeOn(h,'2026-11-'+day)}));
+    ['03','05','12','15'].forEach(d=>p('a',d));['04','13','16'].forEach(d=>p('b',d));const s=equity(h,'2026-11',t30).suggest.map(r=>r.name).join(' y ');
+    add('La sugerencia de turno no incluye a quien ya salió',s==='Beto','Caro salió el 10/11 sin compras; Ana compró 4 veces y Beto 3. Le toca a Beto, no a Caro.','Beto',s||'ninguno');});
+  /* Tiempo de respuesta real: se pinta el dashboard en pantalla 5 veces y se mide hasta el siguiente cuadro */
+  const keep=ui.tab, times=[];
+  for(let i=0;i<5;i++){ui.tab='inicio';const t0=performance.now();render();await raf();times.push(performance.now()-t0);}
+  ui.tab=keep;
+  const avg=times.reduce((a,b)=>a+b,0)/times.length, mx=Math.max(...times);
+  add('Tiempo de respuesta del dashboard',mx<2000,'Se dibuja el dashboard en pantalla 5 veces con los datos actuales y se mide hasta que el navegador lo muestra.','menos de 2 segundos en cada repetición','promedio '+avg.toFixed(0)+' ms; máximo '+mx.toFixed(0)+' ms');
+  lastTests={at:new Date(),results:T};
+}
+/* Requisitos del acta (sección 3), numerados en el orden en que aparecen */
+const REQS=[
+  ['RF1','Registro y cálculo automático de gastos fijos compartidos, divididos en partes iguales entre convivientes activos del periodo.'],
+  ['RF2','Registro de gastos puntuales de consumo común con generación automática de deuda directa entre convivientes.'],
+  ['RF3','Conteo de frecuencia de aportes puntuales por conviviente y sugerencia de turno basada en el conteo mínimo acumulado.'],
+  ['RF4','Alerta visual de desviación cuando el aporte de un conviviente cae por debajo del promedio del grupo.'],
+  ['RF5','Confirmación manual de pago y visualización del dato de contacto (Yape o Plin) de quien debe recibir el pago.'],
+  ['RF6','Dashboard con balance financiero individual y grupal, e indicador de equidad visible para todo el hogar.'],
+  ['RNF1','Actualización del dashboard en tiempo real ante cada registro de gasto, sin necesidad de recargar la aplicación.'],
+  ['RNF2','Autenticación segura mediante el servicio del proveedor serverless (Firebase o Supabase).'],
+  ['RNF3','Disponibilidad en formato web responsive para la etapa de validación, sin dependencia de instalación nativa.'],
+  ['RNF4','Costo de infraestructura contenido dentro de los tiers gratuitos de los servicios serverless seleccionados durante el MVP.'],
+  ['RC1','Cero errores en el cálculo de partes iguales bajo los casos de prueba documentados.'],
+  ['RC2','Consistencia del indicador de equidad frente a escenarios de empate, hogar nuevo y conviviente incorporado con historial previo.'],
+  ['RC3','Tiempo de respuesta del dashboard verificado bajo un umbral definido en el plan de gestión de calidad del proyecto.'],
+];
+const REQ_AUTO={'Alta de usuario':'RNF2','Gasto fijo en partes iguales':'RF1, RC1','Gasto puntual con deuda directa':'RF2, RF3','Empate en sugerencia de turno':'RF3, RC2','Hogar nuevo sin compras':'RC2','Conviviente incorporado a mitad de mes':'RC2','Compra menor al mínimo no suma al indicador':'RF3','Gasto anulado sale del balance y del indicador':'RF6','Cambio de tesorero no altera cuotas ya registradas':'RF1','Conviviente que sale del hogar':'RF1, RC2','El céntimo sobrante lo asume quien cobra':'RC1','Pocas compras no activan la alerta':'RF4','Máximo un aporte por persona por día':'RF3','Compra para parte del hogar no suma al indicador':'RF3','No se anula un gasto con pagos confirmados':'RF5','Pago avisado y confirmado':'RF5','El tesorero corrige gastos de quien ya salió':'RF6','La sugerencia de turno no incluye a quien ya salió':'RF3','Tiempo de respuesta del dashboard':'RNF1, RC3'};
+const MANUAL=[
+  CLOUD?{id:'M1',name:'Alta de usuario',req:'RNF2',steps:'En otro celular: Crear una cuenta nueva con un correo, tocar «Unirme a un hogar», escribir el código del hogar y elegir «Soy nuevo en este hogar». Luego cerrar sesión e intentar entrar con una contraseña incorrecta.',exp:'La persona aparece en Ajustes → Convivientes en todos los celulares; con la contraseña incorrecta se muestra «Correo o contraseña incorrectos».',crit:'Entra con la contraseña correcta y se rechaza la incorrecta (2 de 2).'}
+       :{id:'M1',name:'Alta de usuario',req:'RNF2',steps:'Ajustes → Agregar conviviente: nombre "Prueba", PIN 1234, Yape 900000000. Cerrar sesión y entrar como Prueba con su PIN.',exp:'Prueba aparece en la lista de convivientes y entra con su PIN; con un PIN incorrecto se muestra "PIN incorrecto".',crit:'Entra con el PIN correcto y se rechaza el incorrecto (2 de 2).'},
+  {id:'M2',name:'Gasto fijo',req:'RF1, RC1',steps:'Como el tesorero del mes, Registrar → Gasto fijo → Luz, S/ 100.00. Ir a Gastos.',exp:'Con 4 convivientes la cuota es S/ 25.00 cada uno y los otros 3 aparecen como pendientes con el tesorero.',crit:'La suma de las cuotas es igual al monto (diferencia S/ 0.00).'},
+  {id:'M3',name:'Gasto puntual',req:'RF2, RF3',steps:'Entrar como Dayra (un día en que aún no haya registrado compras). Registrar → Compra puntual "Lejía", S/ 20.00, entre todos. Revisar Gastos y Equidad.',exp:'Los otros 3 le deben S/ 5.00 a Dayra y su conteo de compras sube en 1.',crit:'3 deudas de S/ 5.00 y conteo +1.'},
+  {id:'M4',name:'Empate en sugerencia de turno',req:'RF3, RC2',steps:'Registrar compras hasta que dos personas tengan el mismo número más bajo de compras. Ir a Equidad.',exp:'La sugerencia de turno muestra a las dos personas empatadas ("le toca a X o Y").',crit:'Aparecen los 2 nombres empatados.'},
+  {id:'M5',name:'Tiempo de respuesta',req:'RNF1, RC3',steps:'En un celular, registrar un gasto y cronometrar desde que se toca "Guardar gasto" hasta ver el dashboard actualizado. Repetir 5 veces y anotar los tiempos, el modelo del celular y si se usó wifi o datos.',exp:'Cada repetición tarda menos de 2 segundos.',crit:'Menos de 2 s en 5 de 5 repeticiones.'},
+  {id:'M6',name:'Confirmación de pago',req:'RF5',steps:'Fernando, en su Inicio, toca «Ya pagué» en un pago a Gustavo. Luego Gustavo, en «Te deben», toca «Confirmar».',exp:'Para Fernando el pago queda «Por confirmar»; cuando Gustavo confirma, pasa a pagado y sale de lo pendiente.',crit:'Los 3 estados se muestran bien: pendiente, por confirmar y pagado.'},
+].concat(CLOUD?[{id:'M7',name:'Actualización entre celulares',req:'RNF1',steps:'Con dos celulares abiertos en el mismo hogar, registrar un gasto en uno y mirar el otro sin recargar. Repetir 3 veces.',exp:'El gasto aparece en el otro celular sin recargar la página.',crit:'Aparece en menos de 5 s en 3 de 3 repeticiones.'}]:[]);
+function viewPruebas(){
+  const h=home(); h.manual=h.manual||{};
+  let html='<section class="card"><div class="row"><h2>Pruebas de calidad</h2><button class="btn ghost sm" data-a="tab" data-v="ajustes">‹ Ajustes</button></div><p class="small muted">Pruebas automáticas de los cálculos. Usan datos de prueba aparte: no modifican el hogar.</p><button class="btn" data-a="runTests">Ejecutar pruebas automáticas</button></section>';
+  if(lastTests){
+    const ok=lastTests.results.filter(r=>r.ok).length, n=lastTests.results.length;
+    html+='<section class="card"><div class="row"><h3>Resultado: '+ok+' de '+n+' correctas</h3><span class="pill '+(ok===n?'ok':'bad')+'">'+(ok===n?'Tasa de error 0%':'Hay errores')+'</span></div><p class="small muted">Ejecutado el '+lastTests.at.toLocaleDateString('es-PE')+' a las '+lastTests.at.toLocaleTimeString('es-PE',{hour:'2-digit',minute:'2-digit'})+'</p><div>'+
+     lastTests.results.map((r,i)=>'<div class="test"><span class="res pill '+(r.ok?'ok':'bad')+'">'+(r.ok?'OK':'Falla')+'</span><div style="display:flex;flex-direction:column;gap:3px;min-width:0"><b>'+(i<4?'Caso '+(i+1)+'. ':'Adicional. ')+esc(r.name)+'</b><span class="small muted">Requisito del acta: '+r.req+'</span><span class="small muted">'+esc(r.detail)+'</span><span class="small">Esperado: '+esc(r.esperado)+'<br>Obtenido: <span class="num">'+esc(r.obtenido)+'</span></span></div></div>').join('')+'</div></section>';
+  }
+  html+='<section class="card"><h3>Registro de pruebas manuales</h3><p class="small muted">Las ejecuta una persona del equipo siguiendo los pasos, en la app real. Se guarda quién la hizo y cuándo; tomen captura como evidencia.</p><div>'+
+   MANUAL.map(c=>{const r=h.manual[c.id]||{};return '<div class="test"><span class="res pill '+(r.status==='ok'?'ok':r.status==='falla'?'bad':'neu')+'">'+(r.status==='ok'?'OK':r.status==='falla'?'Falla':'Pendiente')+'</span><div style="display:flex;flex-direction:column;gap:6px;min-width:0;flex:1"><b>'+c.id+'. '+esc(c.name)+'</b><span class="small"><b>Pasos:</b> '+esc(c.steps)+'</span><span class="small"><b>Resultado esperado:</b> '+esc(c.exp)+'</span><span class="small"><b>Requisito del acta:</b> '+c.req+' · <b>Criterio de aceptación:</b> '+esc(c.crit)+'</span>'+
+    (r.at?'<span class="small muted">Ejecutada por '+esc(memberById(h,r.by).name)+' el '+dmy(r.at.slice(0,10))+' a las '+r.at.slice(11)+(r.obs?' · Observación: '+esc(r.obs):'')+'</span>':'')+
+    '<div class="field"><label for="obs-'+c.id+'">Resultado obtenido u observación</label><input id="obs-'+c.id+'" maxlength="140" value="'+esc(r.obs||'')+'"></div><div style="display:flex;gap:8px"><button class="btn sm" data-a="manual" data-c="'+c.id+'" data-v="ok">Marcar OK</button><button class="btn danger sm" data-a="manual" data-c="'+c.id+'" data-v="falla">Marcar falla</button></div></div></div>'}).join('')+'</div></section>';
+  html+='<section class="card"><h3>Hoja de verificación</h3><p class="small muted">Descarga en Excel las pruebas manuales (con responsable, fecha y tasa de error) y el resultado de las pruebas automáticas, lista para el informe.</p><button class="btn sec" data-a="xlsPruebas">Descargar hoja de verificación (Excel)</button></section>';
+  return html;
+}
+
+/* ===================== Exportar a Excel ===================== */
+let xlsxP=null;
+function loadXLSX(){
+  if(window.XLSX)return Promise.resolve(window.XLSX);
+  if(!xlsxP)xlsxP=new Promise((res,rej)=>{const s=document.createElement('script');s.src='https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';s.onload=()=>res(window.XLSX);s.onerror=()=>{xlsxP=null;s.remove();rej(new Error('load'))};document.head.appendChild(s)});
+  return xlsxP;
+}
+/* filas -> hoja; money: columnas con montos en soles */
+function toSheet(X,rows,widths,money){
+  const ws=X.utils.aoa_to_sheet(rows); ws['!cols']=widths.map(w=>({wch:w}));
+  const r=X.utils.decode_range(ws['!ref']);
+  for(let R=r.s.r;R<=r.e.r;R++)(money||[]).forEach(C=>{const c=ws[X.utils.encode_cell({r:R,c:C})];if(c&&c.t==='n')c.z='"S/ "#,##0.00'});
+  return ws;
+}
+async function saveBook(X,wb,filename){
+  const buf=X.write(wb,{bookType:'xlsx',type:'array'});
+  const blob=new Blob([buf],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+  let dl=null; try{if(window.claude&&window.claude.use)dl=await window.claude.use('downloads')}catch(e){}
+  if(dl){
+    try{await dl.save({filename,data:blob});toast('Archivo listo');return}
+    catch(e){const c=e&&e.code; if(c==='declined')return toast('Descarga cancelada'); if(c==='rate_limited')return toast('Espera un momento e inténtalo de nuevo');
+      if(!['unavailable','not_granted','capability_disabled','capability_removed'].includes(c))return toast('No se pudo descargar el archivo');}
+  }
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=filename;document.body.appendChild(a);a.click();
+  setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},1500);toast('Archivo descargado');
+}
+const cents=c=>Math.round(c)/100;
+const fileDate=()=>iso(new Date());
+async function exportPruebas(){
+  const h=home(), m=me(); h.manual=h.manual||{};
+  if(!lastTests){await runTests();ui.tab='pruebas';render();}
+  const X=await loadXLSX();
+  const est=r=>r.status==='ok'?'OK':r.status==='falla'?'Falla':'Pendiente';
+  const rows=[['Hoja de verificación - Pruebas manuales de Roomly'],['Hogar: '+h.name+' ('+h.code+')'],['Exportado el '+dmy(fileDate())+' por '+m.name],[],
+    ['Caso','Nombre','Requisito del acta','Pasos','Resultado esperado','Criterio de aceptación','Resultado obtenido / observación','Resultado','Responsable','Fecha','Hora','Evidencia (n.º de captura)']];
+  MANUAL.forEach(c=>{const r=h.manual[c.id]||{};rows.push([c.id,c.name,c.req,c.steps,c.exp,c.crit,r.obs||'',est(r),r.by?memberById(h,r.by).name:'',r.at?dmy(r.at.slice(0,10)):'',r.at?r.at.slice(11):'',''])});
+  const done=MANUAL.filter(c=>h.manual[c.id]&&h.manual[c.id].status), fails=done.filter(c=>h.manual[c.id].status==='falla');
+  rows.push([],['Casos probados',done.length+' de '+MANUAL.length],['Casos con falla',fails.length],['Tasa de error',done.length?Math.round(fails.length/done.length*100)+'%':'Sin pruebas registradas'],['Meta del plan de calidad','0%']);
+  const auto=[['Pruebas automáticas de Roomly'],['Ejecutadas el '+lastTests.at.toLocaleDateString('es-PE')+' a las '+lastTests.at.toLocaleTimeString('es-PE',{hour:'2-digit',minute:'2-digit'})],[],['N.º','Prueba','Requisito del acta','Qué se comprueba','Resultado esperado','Resultado obtenido','Resultado']];
+  lastTests.results.forEach((r,i)=>auto.push([i+1,r.name,r.req,r.detail,r.esperado,r.obtenido,r.ok?'OK':'Falla']));
+  const okN=lastTests.results.filter(r=>r.ok).length;
+  auto.push([],['Correctas',okN+' de '+lastTests.results.length],['Tasa de error',Math.round((lastTests.results.length-okN)/lastTests.results.length*100)+'%']);
+  const wb=X.utils.book_new();
+  X.utils.book_append_sheet(wb,toSheet(X,rows,[8,24,12,55,50,34,40,11,14,12,8,22]),'Pruebas manuales');
+  X.utils.book_append_sheet(wb,toSheet(X,auto,[6,40,12,60,40,40,10]),'Pruebas automaticas');
+  X.utils.book_append_sheet(wb,toSheet(X,[['Código','Requisito del acta (sección 3)'],...REQS],[8,110]),'Requisitos');
+  await saveBook(X,wb,'Roomly_hoja_de_verificacion_'+fileDate()+'.xlsx');
+}
+async function exportMes(){
+  const h=home(), k=ui.month, X=await loadXLSX();
+  const exps=monthExpenses(h,k).slice().sort((a,b)=>a.date.localeCompare(b.date));
+  const liveE=exps.filter(e=>!e.void), debts=monthDebts(h,k).sort((a,b)=>a.exp.date.localeCompare(b.exp.date));
+  const sum=t=>liveE.filter(e=>e.type===t).reduce((s,e)=>s+e.amount,0);
+  const eq=equity(h,k,today), bal=balances(h,k);
+  const nm=id=>memberById(h,id).name;
+  const st={ok:'Equilibrado',warn:'Por debajo',bad:'Alerta',neu:'Sin compras'};
+  const res=[['Reporte mensual de Roomly'],['Hogar: '+h.name+' ('+h.code+')'],['Mes: '+monthName(k)],['Tesorero del mes: '+(h.treasurer[k]?nm(h.treasurer[k]):'Sin asignar')],['Exportado el '+dmy(fileDate())],[],
+    ['Concepto','Monto'],['Gastos fijos',cents(sum('fijo'))],['Compras puntuales',cents(sum('puntual'))],['Total del mes',cents(sum('fijo')+sum('puntual'))],['Pagos pendientes',cents(debts.filter(d=>!d.paid).reduce((s,d)=>s+d.cents,0))],[],
+    ['Conviviente','Debe','Le deben','Balance neto','Compras para la casa','Estado del indicador']];
+  h.members.forEach(x=>{const b=bal[x.id];const r=eq.rows.find(r=>r.id===x.id);if(!r&&!b.owes&&!b.owed)return;res.push([x.name+(x.leftAt?' (salió el '+dmy(x.leftAt)+')':''),cents(b.owes),cents(b.owed),cents(b.owed-b.owes),r?r.count:0,r?st[r.status]:'-'])});
+  const gas=[['Fecha','Tipo','Categoría','Descripción','Monto','Cobra','Participantes','Cuota por persona','Estado','Registrado por','Última modificación']];
+  exps.forEach(e=>{const sh=splitCents(e.amount,e.participants,e.creditor);const oth=e.participants.find(p=>p!==e.creditor)||e.participants[0];const last=e.log&&e.log.length?e.log[e.log.length-1]:null;
+    gas.push([dmy(e.date),e.type==='fijo'?'Fijo':'Puntual',e.cat,e.desc,cents(e.amount),e.creditor?nm(e.creditor):'',e.participants.map(nm).join(', '),cents(sh[oth]),e.void?'Anulado':'Activo',nm(e.by),last?last.txt+' ('+nm(last.by)+', '+dmy(last.at.slice(0,10))+')':'']);});
+  const pag=[['Fecha del gasto','Concepto','Debe','A quién','Monto','Estado','Fecha de pago','Días pendiente']];
+  debts.forEach(d=>pag.push([dmy(d.exp.date),d.exp.type==='fijo'?d.exp.cat+' (cuota del mes)':d.exp.desc,nm(d.from),nm(d.to),cents(d.cents),d.paid?'Pagado':(d.claimed?'Por confirmar':'Pendiente'),d.paidAt?dmy(d.paidAt):'',d.paid?'':ageOf(d)]));
+  const eqs=[['Indicador de equidad de aporte - '+monthName(k)],[],['Conviviente','Compras','Días en el hogar','Esperado','% de lo esperado','Estado']];
+  eq.rows.forEach(r=>eqs.push([r.name,r.count,r.days,Number(r.expected.toFixed(1)),r.ratio===null?'-':Math.round(r.ratio*100)+'%',st[r.status]]));
+  eqs.push([],['Solo cuentan compras para todo el hogar, desde S/ '+(MIN_APORTE/100).toFixed(2)+', con máximo una por persona por día.'],['El semáforo se activa desde '+MIN_COMPRAS+' compras del hogar en el mes.'],['Esperado = compras del hogar x días de la persona / días de todos.'],['Alerta: menos del 50%. Por debajo: de 50% a 79%. Equilibrado: desde 80%.'],['Sugerencia de turno: '+eq.suggest.map(r=>r.name).join(' o ')]);
+  const wb=X.utils.book_new();
+  X.utils.book_append_sheet(wb,toSheet(X,res,[30,14,14,14,20,20],[1,2,3]),'Resumen');
+  X.utils.book_append_sheet(wb,toSheet(X,gas,[11,9,11,26,12,12,34,16,10,14,44],[4,7]),'Gastos');
+  X.utils.book_append_sheet(wb,toSheet(X,pag,[15,28,12,12,12,11,13,14],[4]),'Pagos');
+  X.utils.book_append_sheet(wb,toSheet(X,eqs,[16,10,16,10,17,14]),'Equidad');
+  const tes=[['Fecha','Hora','Cambiado por','Mes','Antes','Después']];
+  (h.tesLog||[]).forEach(x=>tes.push([dmy(x.at.slice(0,10)),x.at.slice(11),nm(x.by),monthName(x.month),x.from?nm(x.from):'-',x.to?nm(x.to):'-']));
+  X.utils.book_append_sheet(wb,toSheet(X,tes,[12,8,14,18,12,12]),'Cambios de tesorero');
+  await saveBook(X,wb,'Roomly_reporte_'+k+'.xlsx');
+}
+
+/* ===================== Acciones sobre datos ===================== */
+function addMemberTo(h,{name,pin,yape,joinedAt}){
+  name=(name||'').trim(); yape=(yape||'').trim();
+  if(!name)return {ok:false,err:'Escribe el nombre.'};
+  if(h.members.some(x=>x.name.toLowerCase()===name.toLowerCase()))return {ok:false,err:'Ya hay un conviviente con ese nombre.'};
+  if(!CLOUD&&!/^\d{4}$/.test(pin||''))return {ok:false,err:'El PIN debe tener 4 números.'};
+  if(!/^[\d ]{6,15}$/.test(yape))return {ok:false,err:'Escribe un número de Yape o Plin válido.'};
+  if(!joinedAt)return {ok:false,err:'Indica la fecha de ingreso.'};
+  h.members.push(CLOUD?{id:uid(),name,yape,joinedAt,leftAt:null,userId:null}:{id:uid(),name,pin,yape,joinedAt}); return {ok:true};
+}
+function voidExpense(h,id,by){const e=h.expenses.find(x=>x.id===id);if(!canVoid(e))return false;e.void={by,at:stamp()};(e.log=e.log||[]).push({by,at:stamp(),txt:'Anuló el gasto'+(e.by!==by?' como tesorero':'')});return true}
+
+/* Formulario de registro y edición */
+function openForm(editId){
+  const h=home(), m=me();
+  const e=editId?h.expenses.find(x=>x.id===editId):null;
+  const locked=e&&!canVoid(e);
+  const asTes=e&&e.by!==m.id?' como tesorero':'';   /* con pagos confirmados solo se edita la descripción y la categoría */
+  const st={type:e?e.type:'puntual'};
+  const draw=()=>{
+    const cats=st.type==='fijo'?CAT_FIJO:CAT_PUNT;
+    const dateVal=e?e.date:(st.date||iso(today));
+    const act=activeOn(h,dateVal);
+    const parts=e?e.participants:act;
+    document.getElementById('sheet').innerHTML='<div class="sheet-bg" data-a="closeSheet"><form class="sheet wrap" id="expForm" novalidate>'+
+     '<div class="row"><h2>'+(e?'Editar gasto':'Registrar gasto')+'</h2><button type="button" class="btn ghost" data-a="closeSheet" aria-label="Cerrar">✕</button></div>'+
+     (e?'':'<div class="seg" role="group" aria-label="Tipo de gasto"><button type="button" data-t="puntual" aria-pressed="'+(st.type==='puntual')+'">Compra puntual</button><button type="button" data-t="fijo" aria-pressed="'+(st.type==='fijo')+'">Gasto fijo</button></div>')+
+     (locked?'<div class="alert info small">Este gasto ya tiene pagos confirmados o avisados. Para no descuadrar esos pagos, solo puedes cambiar la descripción y la categoría. Si el monto está mal, anúlalo y regístralo de nuevo.</div>':'<p class="small muted">'+(st.type==='fijo'?'Se divide en partes iguales entre todos los convivientes activos. Cada uno paga su cuota al tesorero del mes.':'Lo compraste tú: los demás te deben su parte. Suma a tu indicador si es para todos y cuesta '+fmt(MIN_APORTE)+' o más (máximo una compra por día).')+'</p>')+
+     '<div class="field"><label for="fCat">Categoría</label><select id="fCat">'+cats.map(c=>'<option'+(e&&e.cat===c?' selected':'')+'>'+c+'</option>').join('')+'</select></div>'+
+     (st.type==='puntual'?'<div class="field"><label for="fDesc">¿Qué compraste?</label><input id="fDesc" maxlength="40" placeholder="Ej.: detergente y lejía" value="'+esc(e?e.desc:'')+'"></div>':'')+
+     '<div class="field"><label for="fAmt">Monto (S/)</label><input id="fAmt" inputmode="decimal" placeholder="0.00" value="'+(e?(e.amount/100).toFixed(2):esc(st.amt||''))+'"'+(locked?' disabled':'')+'></div>'+
+     '<div class="field"><label for="fDate">Fecha</label><input id="fDate" type="date" value="'+dateVal+'" max="'+iso(today)+'" min="'+MIN_FREE+'-01"'+(locked||e?' disabled':'')+'></div>'+
+     (st.type==='fijo'&&!e?'<div class="field" id="tesField"></div>':'')+
+     (st.type==='puntual'?'<div class="field"><label>¿Entre quiénes se divide?</label><div class="checks">'+h.members.filter(x=>act.includes(x.id)).map(x=>'<label><input type="checkbox" name="part" value="'+x.id+'"'+(parts.includes(x.id)?' checked':'')+((x.id===(e?e.payer:m.id))||locked?' disabled':'')+'> '+esc(x.name)+(x.id===m.id?' (tú)':'')+'</label>').join('')+'</div><span class="small muted">Por defecto, entre todos. Desmarca a quien no usa lo que compraste.</span></div>':'')+
+     '<span class="err" id="fErr" role="alert"></span><button class="btn block" type="submit">'+(e?'Guardar cambios':'Guardar gasto')+'</button></form></div>';
+    document.querySelectorAll('[data-t]').forEach(b=>b.onclick=()=>{const a=document.getElementById('fAmt'),d=document.getElementById('fDate');st.amt=a.value;st.date=d.value;st.type=b.dataset.t;draw()});
+    const f=document.getElementById('expForm');
+    /* gasto fijo: si el mes no tiene tesorero, se elige en el mismo formulario */
+    const tesUpd=()=>{const box=document.getElementById('tesField');if(!box)return;const k=monthOf(document.getElementById('fDate').value||iso(today));
+      box.innerHTML=h.treasurer[k]?'<span class="small muted">Cobra el tesorero de '+monthName(k)+': <b>'+esc(memberById(h,h.treasurer[k]).name)+'</b>.</span>':'<label for="fTes">Tesorero de '+monthName(k)+' (obligatorio)</label><select id="fTes"><option value="">Elige al tesorero</option>'+h.members.filter(x=>activeOn(h,k+'-01').includes(x.id)||isActive(x,iso(today))).map(x=>'<option value="'+x.id+'">'+esc(x.name)+'</option>').join('')+'</select><span class="small muted">El hogar todavía no registra tesorero para ese mes.</span>';};
+    tesUpd(); document.getElementById('fDate').addEventListener('change',tesUpd);
+    f.querySelectorAll('input,select').forEach(i=>i.addEventListener('input',()=>document.getElementById('fErr').textContent=''));
+    f.onsubmit=ev=>{ev.preventDefault();
+      const err=t=>document.getElementById('fErr').textContent=t;
+      const cat=document.getElementById('fCat').value;
+      const descEl=document.getElementById('fDesc'); const desc=descEl?descEl.value.trim():cat;
+      if(st.type==='puntual'&&!desc)return err('Escribe brevemente qué compraste.');
+      if(locked){e.cat=cat;e.desc=desc;e.log.push({by:m.id,at:stamp(),txt:'Editó la descripción'+asTes});save();closeSheet();render();toast('Cambios guardados');return}
+      const raw=document.getElementById('fAmt').value.replace(',','.').trim();
+      if(!/^\d+(\.\d{1,2})?$/.test(raw)||Number(raw)<=0)return err('Escribe un monto mayor a 0, con hasta 2 decimales.');
+      if(Number(raw)>99999)return err('El monto es demasiado alto para un gasto del hogar.');
+      const amount=Math.round(Number(raw)*100);
+      const date=e?e.date:document.getElementById('fDate').value; if(!date||date>iso(today))return err('Elige una fecha de hoy o anterior.');
+      if(date<MIN_FREE+'-01')return err('Solo puedes registrar gastos del mes actual o del anterior.');
+      if(st.type==='puntual'){
+        const payer=e?e.payer:m.id;
+        const ps=[payer,...[...f.querySelectorAll('input[name=part]:checked')].map(i=>i.value).filter(v=>v!==payer)];
+        if(ps.length<2)return err('Elige al menos a otra persona para dividir el gasto.');
+        if(e){Object.assign(e,{cat,desc,amount,participants:ps});e.log.push({by:m.id,at:stamp(),txt:'Editó el gasto'+asTes});}
+        else h.expenses.push({id:uid(),type:'puntual',cat,desc,amount,date,payer,creditor:payer,by:m.id,participants:ps,paid:{},log:[{by:m.id,at:stamp(),txt:'Registró el gasto'}]});
+      }else{
+        if(e){Object.assign(e,{cat,desc:cat,amount});e.log.push({by:m.id,at:stamp(),txt:'Editó el gasto'+asTes});}
+        else{
+          const k=monthOf(date);
+          const dup=h.expenses.find(x=>x.type==='fijo'&&!x.void&&x.cat===cat&&monthOf(x.date)===k);
+          if(dup)return err('Ya hay un gasto fijo de '+cat+' en '+monthName(k)+' ('+fmt(dup.amount)+'). Si el monto está mal, edítalo o anúlalo desde Gastos.');
+          if(!h.treasurer[k]){const t=document.getElementById('fTes');if(!t||!t.value)return err('Elige al tesorero de '+monthName(k)+' antes de guardar.');setTreasurer(h,k,t.value,m.id);}
+          const ps=activeOn(h,date); if(ps.length<2)return err('Se necesitan al menos 2 convivientes activos en esa fecha.');
+          if(!ps.includes(h.treasurer[k]))return err('El tesorero de ese mes no vive en el hogar en esa fecha. Cámbialo en Ajustes.');
+          h.expenses.push({id:uid(),type:'fijo',cat,desc:cat,amount,date,payer:null,creditor:h.treasurer[k],by:m.id,participants:ps,paid:{},log:[{by:m.id,at:stamp(),txt:'Registró el gasto'}]});
+        }
+      }
+      save(); closeSheet(); ui.month=monthOf(date); render(); toast(e?'Cambios guardados':'Gasto registrado');
+    };
+    setTimeout(()=>{const x=document.getElementById(st.type==='puntual'?'fDesc':'fAmt');x&&!x.disabled&&x.focus()},50);
+  };
+  draw();
+}
+function closeSheet(){document.getElementById('sheet').innerHTML=''}
+function confirmSheet(title,text,okLabel,action,attrs){
+  document.getElementById('sheet').innerHTML='<div class="sheet-bg" data-a="closeSheet"><div class="sheet wrap" role="alertdialog" aria-labelledby="cfT"><h2 id="cfT">'+title+'</h2><p class="muted">'+text+'</p><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn danger" data-a="'+action+'" '+attrs+'>'+okLabel+'</button><button class="btn sec" data-a="closeSheet">Cancelar</button></div></div></div>';
+}
+function openReminder(from){
+  const h=home(), m=me();
+  const ds=allPending(h).filter(d=>d.from===from&&d.to===m.id&&!d.claimed);
+  if(!ds.length)return toast('Ya avisó que pagó; solo falta que lo confirmes');
+  const total=ds.reduce((s,d)=>s+d.cents,0);
+  const text='Hola '+memberById(h,from).name+', Roomly te recuerda que tienes '+ds.length+' pago'+(ds.length===1?'':'s')+' pendiente'+(ds.length===1?'':'s')+' a '+m.name+' por un total de '+fmt(total)+':\n'+ds.map(d=>'- '+fmt(d.cents)+' por '+concept(d)).join('\n')+'\nPuedes pagar por Yape o Plin al '+m.yape+'.\nMensaje generado automáticamente por Roomly.';
+  document.getElementById('sheet').innerHTML='<div class="sheet-bg" data-a="closeSheet"><div class="sheet wrap"><div class="row"><h2>Recordatorio por WhatsApp</h2><button class="btn ghost" data-a="closeSheet" aria-label="Cerrar">✕</button></div><p class="small muted">Roomly ya le muestra este aviso a '+esc(memberById(h,from).name)+' cuando entra a la app. Envíalo por WhatsApp solo si hace falta.</p><div class="msg" id="remText">'+esc(text)+'</div><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn" data-a="copyRem">Copiar mensaje</button><a class="btn sec" style="text-decoration:none" href="https://wa.me/?text='+encodeURIComponent(text)+'" target="_blank" rel="noopener">Abrir WhatsApp</a></div></div></div>';
+}
+
+/* ===================== Ingreso ===================== */
+function renderLogin(){
+  const L=ui.login; const h=store.homes[(L.code||'').toUpperCase()];
+  let html='<div class="login wrap"><div class="brand-hero"><div class="logo">Roomly</div><p class="muted">Cuentas claras y turnos justos entre roommates.</p></div>';
+  if(L.step==='create'){
+    html+='<form class="card" id="createForm" novalidate><h2>Crear un hogar</h2>'+
+     '<div class="field"><label for="cHome">Nombre del hogar</label><input id="cHome" maxlength="30" placeholder="Ej.: Depa Surco"></div>'+
+     '<div class="field"><label for="cName">Tu nombre</label><input id="cName" maxlength="20"></div>'+
+     '<div class="field"><label for="cPin">Tu PIN de 4 dígitos</label><input id="cPin" inputmode="numeric" maxlength="4" type="password"></div>'+
+     '<div class="field"><label for="cYape">Tu Yape / Plin</label><input id="cYape" inputmode="tel" maxlength="15"></div>'+
+     '<span class="err" id="cErr" role="alert"></span><button class="btn block" type="submit">Crear hogar</button><button type="button" class="btn ghost" data-a="loginBack">Ya tengo un código</button></form>';
+  }else if(L.step==='code'||!h){
+    html+='<form class="card" id="codeForm" novalidate><h2>Entra a tu hogar</h2><div class="field"><label for="lCode">Código del hogar</label><input id="lCode" value="'+esc(L.code||'')+'" autocapitalize="characters" maxlength="8" placeholder="Ej.: RMLY26"></div><span class="err" id="lErr" role="alert">'+(L.code&&!h&&L.tried?'No encontramos un hogar con ese código.':'')+'</span><button class="btn block" type="submit">Continuar</button><button type="button" class="btn ghost" data-a="create">Crear un hogar nuevo</button></form>'+
+     '<div class="demo-box"><b>Hogar de ejemplo para la demo</b><br>Código <b>RMLY26</b>. PIN: Fernando 1111, Gustavo 2222, Dayra 3333, Mauricio 4444.</div>';
+  }else{
+    html+='<form class="card" id="pinForm" novalidate><div class="row"><h2>'+esc(h.name)+'</h2><button type="button" class="btn ghost sm" data-a="loginBack">Cambiar código</button></div><div class="field"><label for="lWho">¿Quién eres?</label><select id="lWho">'+h.members.map(x=>'<option value="'+x.id+'"'+(L.who===x.id?' selected':'')+'>'+esc(x.name)+(x.leftAt?' (ya no vive aquí)':'')+'</option>').join('')+'</select></div>'+
+     '<div class="field"><label for="lPin">PIN</label><input id="lPin" type="password" inputmode="numeric" maxlength="4" autocomplete="off"></div><span class="err" id="pErr" role="alert"></span><button class="btn block" type="submit">Entrar</button></form>'+
+     (h.demo?'<div class="demo-box">PIN de la demo: Fernando 1111, Gustavo 2222, Dayra 3333, Mauricio 4444.</div>':'');
+  }
+  $app.innerHTML=html+'</div>';
+  const cf=document.getElementById('codeForm');
+  if(cf)cf.onsubmit=e=>{e.preventDefault();L.code=document.getElementById('lCode').value.trim().toUpperCase();L.tried=true;if(store.homes[L.code])L.step='pin';renderLogin()};
+  const pf=document.getElementById('pinForm');
+  if(pf){const pin=document.getElementById('lPin');pin.focus();pin.oninput=()=>document.getElementById('pErr').textContent='';
+    pf.onsubmit=e=>{e.preventDefault();const id=document.getElementById('lWho').value;const mm=h.members.find(x=>x.id===id);L.who=id;
+      if(!/^\d{4}$/.test(pin.value))return document.getElementById('pErr').textContent='El PIN tiene 4 números.';
+      if(mm.pin!==pin.value)return document.getElementById('pErr').textContent='PIN incorrecto. Inténtalo de nuevo.';
+      store.session={code:h.code,memberId:id};save();ui.tab='inicio';ui.month=CUR;render();}}
+  const crf=document.getElementById('createForm');
+  if(crf)crf.onsubmit=e=>{e.preventDefault();const v=id=>document.getElementById(id).value.trim();const err=t=>document.getElementById('cErr').textContent=t;
+    if(!v('cHome'))return err('Ponle un nombre al hogar.');
+    let code;do{code='RM'+Math.random().toString(36).slice(2,6).toUpperCase()}while(store.homes[code]);
+    const nh={code,name:v('cHome'),demo:false,members:[],treasurer:{},expenses:[],manual:{}};
+    const r=addMemberTo(nh,{name:v('cName'),pin:v('cPin'),yape:v('cYape'),joinedAt:iso(today)});if(!r.ok)return err(r.err);
+    setTreasurer(nh,CUR,nh.members[0].id,nh.members[0].id);
+    store.homes[code]=nh;store.session={code,memberId:nh.members[0].id};save();ui.tab='ajustes';render();toast('Hogar creado. Código: '+code);};
+}
+
+/* ===================== Modo multiusuario (Supabase) ===================== */
+let sb=null;
+const cs={user:null,homes:[],base:null,chan:null,view:'auth',authMode:'login',msg:'',info:'',email:'',preview:null,pending:false};
+const LAST='roomly-cloud-last';
+const clone=o=>JSON.parse(JSON.stringify(o));
+const same=(a,b)=>JSON.stringify(a)===JSON.stringify(b);
+const fill=(t,src)=>{Object.keys(t).forEach(k=>delete t[k]);return Object.assign(t,src)};
+const lsGet=k=>{try{return localStorage.getItem(k)}catch(e){return null}};
+const lsSet=(k,v)=>{try{v==null?localStorage.removeItem(k):localStorage.setItem(k,v)}catch(e){}};
+const genCode=()=>{const A='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';let s='RM';const r=new Uint8Array(4);crypto.getRandomValues(r);r.forEach(x=>s+=A[x%A.length]);return s};
+function errText(e){
+  const m=String(e&&(e.message||e.error_description||e)||'');
+  if(/Invalid login/i.test(m))return 'Correo o contraseña incorrectos.';
+  if(/already (been )?registered/i.test(m))return 'Ese correo ya tiene cuenta. Entra con tu contraseña.';
+  if(/not confirmed/i.test(m))return 'Primero confirma tu correo con el enlace que te enviamos.';
+  if(/at least 6|Password should/i.test(m))return 'La contraseña debe tener al menos 6 caracteres.';
+  if(/rate limit|too many/i.test(m))return 'Demasiados intentos. Espera unos minutos y vuelve a intentar.';
+  if(/fetch|network|Failed to/i.test(m))return 'Sin conexión. Revisa tu internet.';
+  return m||'Ocurrió un error. Inténtalo de nuevo.';
+}
+const toastErr=e=>toast(errText(e));
+function loadScript(src){return new Promise((res,rej)=>{const s=document.createElement('script');s.src=src;s.onload=res;s.onerror=()=>rej(new Error('load'));document.head.appendChild(s)})}
+const brand='<div class="brand-hero"><div class="logo">Roomly</div><p class="muted">Cuentas claras y turnos justos entre roommates.</p></div>';
+
+async function cloudBoot(){
+  $app.innerHTML='<div class="login wrap">'+brand+'<p class="muted">Cargando…</p></div>';
+  try{
+    if(!window.supabase)await loadScript('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0/dist/umd/supabase.js');
+    sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+    const {data}=await sb.auth.getSession();
+    cs.user=data.session?data.session.user:null;
+  }catch(e){$app.innerHTML='<div class="login wrap">'+brand+'<div class="alert bad"><b>No se pudo conectar con Roomly.</b><span class="small">Revisa tu internet y vuelve a cargar la página.</span></div></div>';return}
+  /* no se llama a Supabase dentro del aviso de sesión: se deja para el siguiente ciclo */
+  sb.auth.onAuthStateChange((ev,session)=>{const u=session?session.user:null;if((u&&u.id)!==(cs.user&&cs.user.id)){cs.user=u;setTimeout(afterAuth,0)}});
+  await afterAuth();
+}
+async function afterAuth(){
+  leaveHome();
+  if(!cs.user){cs.view='auth';renderCloud();return}
+  await listMyHomes();
+  const last=lsGet(LAST);
+  const pick=cs.homes.find(x=>x.code===last)||(cs.homes.length===1?cs.homes[0]:null);
+  if(pick)await openHome(pick.code);else{cs.view='homes';renderCloud()}
+}
+async function listMyHomes(){
+  const {data,error}=await sb.from('members').select('home_code,id,name,homes(name)').eq('user_id',cs.user.id);
+  cs.homes=error?[]:data.map(r=>({code:r.home_code,member:r.name,name:r.homes?r.homes.name:r.home_code}));
+}
+function leaveHome(){if(cs.chan&&sb){sb.removeChannel(cs.chan);cs.chan=null}store={homes:{},session:null};cs.base=null;closeSheet()}
+
+/* ---- lectura del hogar ---- */
+async function fetchHome(code){
+  const [hr,mr,er]=await Promise.all([
+    sb.from('homes').select('code,name,demo,treasurer,tes_log,manual').eq('code',code).maybeSingle(),
+    sb.from('members').select('id,user_id,name,yape,joined_at,left_at').eq('home_code',code),
+    sb.from('expenses').select('id,data,rev').eq('home_code',code)]);
+  const err=hr.error||mr.error||er.error; if(err)throw err;
+  if(!hr.data)return null;
+  const r=hr.data, revs={};
+  er.data.forEach(x=>revs[x.id]=x.rev);
+  const h={code:r.code,name:r.name,demo:r.demo,treasurer:r.treasurer||{},tesLog:r.tes_log||[],manual:r.manual||{},
+    members:mr.data.map(m=>({id:m.id,name:m.name,yape:m.yape,joinedAt:m.joined_at,leftAt:m.left_at||null,userId:m.user_id||null}))
+      .sort((a,b)=>a.joinedAt.localeCompare(b.joinedAt)||a.name.localeCompare(b.name)),
+    expenses:er.data.map(x=>Object.assign({},x.data,{id:x.id}))};
+  return {h,revs};
+}
+const homeFields=h=>clone({name:h.name,treasurer:h.treasurer||{},tesLog:h.tesLog||[],manual:h.manual||{}});
+const memberRow=m=>({name:m.name,yape:m.yape,joined_at:m.joinedAt,left_at:m.leftAt||null});
+function snap(h,revs){cs.base={home:homeFields(h),members:Object.fromEntries(h.members.map(m=>[m.id,memberRow(m)])),exp:Object.fromEntries(h.expenses.map(e=>[e.id,{json:JSON.stringify(e),rev:revs[e.id]||1}]))}}
+async function openHome(code){
+  try{
+    const r=await fetchHome(code);
+    const mine=r&&r.h.members.find(m=>m.userId===cs.user.id);
+    if(!mine){lsSet(LAST,null);await listMyHomes();cs.view='homes';renderCloud();return}
+    store={homes:{[code]:r.h},session:{code,memberId:mine.id}};snap(r.h,r.revs);lsSet(LAST,code);
+    ui.tab='inicio';ui.month=CUR;ui.filter='todos';subscribe(code);render();
+  }catch(e){toastErr(e);cs.view='homes';renderCloud()}
+}
+
+/* ---- tiempo real: cualquier cambio de otro celular vuelve a leer el hogar ---- */
+function subscribe(code){
+  if(cs.chan)sb.removeChannel(cs.chan);
+  const on=()=>scheduleRefresh();
+  cs.chan=sb.channel('roomly-'+code)
+    .on('postgres_changes',{event:'*',schema:'public',table:'expenses',filter:'home_code=eq.'+code},on)
+    .on('postgres_changes',{event:'*',schema:'public',table:'members',filter:'home_code=eq.'+code},on)
+    .on('postgres_changes',{event:'*',schema:'public',table:'homes',filter:'code=eq.'+code},on)
+    .subscribe();
+}
+let refreshT=null;
+function scheduleRefresh(){clearTimeout(refreshT);refreshT=setTimeout(refresh,250)}
+async function refresh(){
+  const h=home(); if(!CLOUD||!h||!cs.user)return;
+  await syncChain; if(dirty){scheduleRefresh();return}
+  try{
+    const r=await fetchHome(h.code); if(dirty||home()!==h)return;
+    if(!r)return afterAuth();
+    const mine=r.h.members.find(m=>m.userId===cs.user.id); if(!mine)return afterAuth();
+    /* se actualiza en el mismo objeto para no perder lo que esté abierto en pantalla */
+    Object.assign(h,{name:r.h.name,demo:r.h.demo,treasurer:r.h.treasurer,tesLog:r.h.tesLog,manual:r.h.manual});
+    const mm=new Map(h.members.map(m=>[m.id,m])); h.members=r.h.members.map(m=>mm.has(m.id)?fill(mm.get(m.id),m):m);
+    const em=new Map(h.expenses.map(e=>[e.id,e])); h.expenses=r.h.expenses.map(e=>em.has(e.id)?fill(em.get(e.id),e):e);
+    store.session.memberId=mine.id; snap(h,r.revs); softRender();
+  }catch(e){}
+}
+const typing=()=>{const a=document.activeElement;return a&&$app.contains(a)&&/INPUT|SELECT|TEXTAREA/.test(a.tagName)};
+function softRender(){if(typing()){cs.pending=true;return}render()}
+document.addEventListener('focusout',()=>{if(cs.pending)setTimeout(()=>{if(cs.pending&&!typing()){cs.pending=false;render()}},0)});
+document.addEventListener('visibilitychange',()=>{if(CLOUD&&!document.hidden&&home())scheduleRefresh()});
+setInterval(()=>{if(CLOUD&&!document.hidden&&home())refresh()},30000);
+
+/* ---- guardado: solo se envía lo que cambió; si otra persona cambió lo mismo, se combinan ---- */
+function mergeMap(b,l,r){b=b||{};l=l||{};const o=Object.assign({},r||{});new Set([...Object.keys(b),...Object.keys(l)]).forEach(k=>{if(!same(l[k],b[k])){if(l[k]===undefined)delete o[k];else o[k]=l[k]}});return o}
+function merge3(b,l,r){
+  const o=Object.assign({},r);
+  new Set([...Object.keys(b),...Object.keys(l)]).forEach(k=>{
+    if(k==='paid'||k==='claims')o[k]=mergeMap(b[k],l[k],r[k]);
+    else if(k==='log')o.log=(r.log||[]).concat((l.log||[]).slice((b.log||[]).length));
+    else if(!same(l[k],b[k])){if(l[k]===undefined)delete o[k];else o[k]=l[k]}
+  });
+  return o;
+}
+let syncChain=Promise.resolve(), dirty=false;
+function cloudSave(){dirty=true;syncChain=syncChain.then(doSync).catch(e=>{toast('No se pudo guardar el último cambio. '+errText(e));scheduleRefresh()})}
+async function doSync(){
+  if(!dirty)return; dirty=false;
+  const h=home(); if(!h||!cs.base)return;
+  const code=h.code, B=cs.base; let changed=false;
+  const hl=homeFields(h);
+  if(!same(hl,B.home)){
+    const {data:r,error}=await sb.from('homes').select('name,treasurer,tes_log,manual').eq('code',code).single(); if(error)throw error;
+    const rem={name:r.name,treasurer:r.treasurer||{},tesLog:r.tes_log||[],manual:r.manual||{}};
+    const mg={name:hl.name!==B.home.name?hl.name:rem.name,treasurer:mergeMap(B.home.treasurer,hl.treasurer,rem.treasurer),
+      tesLog:rem.tesLog.concat(hl.tesLog.slice(B.home.tesLog.length)),manual:mergeMap(B.home.manual,hl.manual,rem.manual)};
+    const {error:e2}=await sb.from('homes').update({name:mg.name,treasurer:mg.treasurer,tes_log:mg.tesLog,manual:mg.manual}).eq('code',code); if(e2)throw e2;
+    if(same(homeFields(h),hl)){if(!same(mg,hl)){Object.assign(h,clone(mg));changed=true}B.home=clone(mg)}else B.home=hl;
+  }
+  for(const m of h.members){
+    const row=memberRow(m), b=B.members[m.id];
+    if(!b){const {error}=await sb.from('members').insert(Object.assign({home_code:code,id:m.id},row));if(error)throw error}
+    else{const diff={};Object.keys(row).forEach(k=>{if(row[k]!==b[k])diff[k]=row[k]});
+      if(Object.keys(diff).length){const {error}=await sb.from('members').update(diff).eq('home_code',code).eq('id',m.id);if(error)throw error}}
+    B.members[m.id]=row;
+  }
+  for(const e of h.expenses){
+    const b=B.exp[e.id], json=JSON.stringify(e);
+    if(!b){const {error}=await sb.from('expenses').insert({home_code:code,id:e.id,data:e});if(error)throw error;B.exp[e.id]={json,rev:1};continue}
+    if(b.json===json)continue;
+    const base=JSON.parse(b.json), local=JSON.parse(json);
+    let rev=b.rev, remote=b.remote||base;
+    for(let i=0;;i++){
+      const mg=merge3(base,local,remote);
+      const {data,error}=await sb.from('expenses').update({data:mg,rev:rev+1,updated_at:new Date().toISOString()}).eq('home_code',code).eq('id',e.id).eq('rev',rev).select('rev');
+      if(error)throw error;
+      if(data.length){
+        if(JSON.stringify(e)===json){if(!same(mg,local)){fill(e,mg);changed=true}B.exp[e.id]={json:JSON.stringify(mg),rev:rev+1}}
+        else B.exp[e.id]={json,rev:rev+1,remote:mg};   /* hubo otro cambio mientras se guardaba: se envía en la siguiente vuelta */
+        break;
+      }
+      if(i>=3)throw new Error('Otra persona está cambiando este gasto. Inténtalo otra vez.');
+      const {data:r,error:e3}=await sb.from('expenses').select('data,rev').eq('home_code',code).eq('id',e.id).single(); if(e3)throw e3;
+      remote=r.data; rev=r.rev;
+    }
+  }
+  if(changed)softRender();
+}
+
+/* ---- pantallas de cuenta y hogares ---- */
+function renderCloud(){
+  const V=cs.view; let html='<div class="login wrap">'+brand;
+  if(V==='auth'){
+    const reg=cs.authMode==='signup';
+    html+='<form class="card" id="authForm" novalidate><h2>'+(reg?'Crea tu cuenta':'Entra a Roomly')+'</h2>'+
+     (cs.info?'<div class="alert info small">'+esc(cs.info)+'</div>':'')+
+     '<div class="field"><label for="aEmail">Correo</label><input id="aEmail" type="email" autocomplete="email" inputmode="email" value="'+esc(cs.email)+'"></div>'+
+     '<div class="field"><label for="aPass">Contraseña'+(reg?' (mínimo 6 caracteres)':'')+'</label><input id="aPass" type="password" autocomplete="'+(reg?'new-password':'current-password')+'"></div>'+
+     '<span class="err" id="aErr" role="alert">'+esc(cs.msg)+'</span><button class="btn block" type="submit">'+(reg?'Crear cuenta':'Entrar')+'</button>'+
+     '<button type="button" class="btn ghost" data-a="cAuthMode">'+(reg?'Ya tengo cuenta':'Crear una cuenta nueva')+'</button></form>';
+  }else if(V==='homes'){
+    html+=(cs.homes.length?'<section class="card"><h2>Tus hogares</h2><div class="list">'+cs.homes.map(x=>'<div class="item"><div style="min-width:0"><b>'+esc(x.name)+'</b><div class="small muted">Código '+esc(x.code)+' · entras como '+esc(x.member)+'</div></div><button class="btn sm" data-a="cOpen" data-v="'+esc(x.code)+'">Entrar</button></div>').join('')+'</div></section>':'')+
+     '<form class="card" id="joinForm" novalidate><h2>Unirme a un hogar</h2><p class="small muted">Pídele el código a quien creó el hogar.</p><div class="field"><label for="jCode">Código del hogar</label><input id="jCode" autocapitalize="characters" maxlength="8" placeholder="Ej.: RMAB12"></div><span class="err" id="jErr" role="alert"></span><button class="btn block" type="submit">Buscar hogar</button></form>'+
+     '<section class="card"><h2>Crear un hogar</h2><p class="small muted">Serás el primer conviviente y el tesorero de este mes. Luego compartes el código con tus roommates.</p><button class="btn sec block" data-a="cCreate">Crear hogar</button></section>'+
+     '<p class="small muted" style="text-align:center">Conectado como '+esc(cs.user.email||'')+'</p><button class="btn ghost" data-a="cLogout">Cerrar sesión</button>';
+  }else if(V==='join'){
+    const p=cs.preview, free=p.members.filter(x=>!x.claimed&&!x.left);
+    html+='<form class="card" id="claimForm" novalidate><div class="row"><h2>'+esc(p.name)+'</h2><button type="button" class="btn ghost sm" data-a="cBack">Volver</button></div>'+
+     '<div class="field"><label for="jWho">¿Quién eres?</label><select id="jWho">'+free.map(x=>'<option value="'+esc(x.id)+'">'+esc(x.name)+'</option>').join('')+'<option value="">Soy nuevo en este hogar</option></select></div>'+
+     '<div id="newBox" style="display:'+(free.length?'none':'flex')+';flex-direction:column;gap:10px"><div class="field"><label for="jName">Tu nombre</label><input id="jName" maxlength="20"></div><div class="field"><label for="jYape">Tu Yape / Plin</label><input id="jYape" inputmode="tel" maxlength="15"></div></div>'+
+     '<span class="err" id="jErr2" role="alert"></span><button class="btn block" type="submit">Unirme</button></form>';
+  }else if(V==='create'){
+    html+='<form class="card" id="cForm" novalidate><div class="row"><h2>Crear un hogar</h2><button type="button" class="btn ghost sm" data-a="cBack">Volver</button></div>'+
+     '<div class="field"><label for="cHome">Nombre del hogar</label><input id="cHome" maxlength="30" placeholder="Ej.: Depa Surco"></div>'+
+     '<label class="small" style="display:flex;gap:8px;align-items:center"><input type="checkbox" id="cDemo"> Cargar datos de ejemplo (demo para la sustentación)</label>'+
+     '<div id="cRealBox" style="display:flex;flex-direction:column;gap:10px"><div class="field"><label for="cName">Tu nombre</label><input id="cName" maxlength="20"></div><div class="field"><label for="cYape">Tu Yape / Plin</label><input id="cYape" inputmode="tel" maxlength="15"></div></div>'+
+     '<div id="cDemoBox" style="display:none;flex-direction:column;gap:10px"><div class="field"><label for="cWho">¿Quién eres en el ejemplo?</label><select id="cWho"><option value="f">Fernando</option><option value="g" selected>Gustavo</option><option value="d">Dayra</option><option value="m">Mauricio</option></select></div><span class="small muted">Se crean 3 meses de gastos de ejemplo. Los demás entran con el código y eligen su nombre.</span></div>'+
+     '<span class="err" id="cErr" role="alert"></span><button class="btn block" type="submit">Crear hogar</button></form>';
+  }
+  $app.innerHTML=html+'</div>';
+  const busy=(f,on)=>{const b=f.querySelector('button[type=submit]');if(b){b.disabled=on;b.style.opacity=on?.6:1}};
+  const af=document.getElementById('authForm');
+  if(af)af.onsubmit=async ev=>{ev.preventDefault();
+    const email=document.getElementById('aEmail').value.trim(), pass=document.getElementById('aPass').value, err=t=>document.getElementById('aErr').textContent=t;
+    cs.email=email; cs.info='';
+    if(!/^\S+@\S+\.\S+$/.test(email))return err('Escribe un correo válido.');
+    if(pass.length<6)return err('La contraseña debe tener al menos 6 caracteres.');
+    busy(af,true);
+    try{
+      if(cs.authMode==='signup'){
+        const {data,error}=await sb.auth.signUp({email,password:pass}); if(error)throw error;
+        if(!data.session){cs.authMode='login';cs.msg='';cs.info='Te enviamos un correo para confirmar tu cuenta. Ábrelo y luego entra aquí.';renderCloud();return}
+      }else{const {error}=await sb.auth.signInWithPassword({email,password:pass}); if(error)throw error}
+      cs.msg='';
+    }catch(e){busy(af,false);err(errText(e))}
+  };
+  const jf=document.getElementById('joinForm');
+  if(jf)jf.onsubmit=async ev=>{ev.preventDefault();
+    const code=document.getElementById('jCode').value.trim().toUpperCase(), err=t=>document.getElementById('jErr').textContent=t;
+    if(!/^[A-Z0-9]{4,8}$/.test(code))return err('Escribe el código del hogar.');
+    busy(jf,true);
+    try{const {data,error}=await sb.rpc('home_preview',{p_code:code}); if(error)throw error;
+      if(!data){busy(jf,false);return err('No encontramos un hogar con ese código.')}
+      if(data.is_member)return openHome(data.code);
+      cs.preview=data; cs.view='join'; renderCloud();
+    }catch(e){busy(jf,false);err(errText(e))}
+  };
+  const who=document.getElementById('jWho');
+  if(who)who.onchange=()=>{document.getElementById('newBox').style.display=who.value?'none':'flex'};
+  const cf=document.getElementById('claimForm');
+  if(cf)cf.onsubmit=async ev=>{ev.preventDefault();
+    const err=t=>document.getElementById('jErr2').textContent=t, id=who.value||null;
+    let name=null,yape=null;
+    if(!id){name=document.getElementById('jName').value.trim();yape=document.getElementById('jYape').value.trim();
+      if(!name)return err('Escribe tu nombre.'); if(!/^[\d ]{6,15}$/.test(yape))return err('Escribe un número de Yape o Plin válido.')}
+    busy(cf,true);
+    try{const {error}=await sb.rpc('join_home',{p_code:cs.preview.code,p_member_id:id,p_name:name,p_yape:yape,p_joined:iso(today)}); if(error)throw error;
+      await listMyHomes(); await openHome(cs.preview.code); toast('Listo, ya estás en '+cs.preview.name);
+    }catch(e){busy(cf,false);err(errText(e))}
+  };
+  const demo=document.getElementById('cDemo');
+  if(demo)demo.onchange=()=>{document.getElementById('cRealBox').style.display=demo.checked?'none':'flex';document.getElementById('cDemoBox').style.display=demo.checked?'flex':'none';const n=document.getElementById('cHome');if(demo.checked&&!n.value)n.value='Depa Monterrico'};
+  const crf=document.getElementById('cForm');
+  if(crf)crf.onsubmit=async ev=>{ev.preventDefault();
+    const v=id=>document.getElementById(id).value.trim(), err=t=>document.getElementById('cErr').textContent=t;
+    const hname=v('cHome'); if(!hname)return err('Ponle un nombre al hogar.');
+    let p;
+    if(demo.checked){const s=seedDemo(today);
+      p={home:{name:hname,demo:true,treasurer:s.treasurer,tesLog:[]},members:s.members.map(({pin,...m})=>m),expenses:s.expenses,me:v('cWho')};
+    }else{const name=v('cName'), yape=v('cYape');
+      if(!name)return err('Escribe tu nombre.'); if(!/^[\d ]{6,15}$/.test(yape))return err('Escribe un número de Yape o Plin válido.');
+      const id=uid();
+      p={home:{name:hname,demo:false,treasurer:{[CUR]:id},tesLog:[{by:id,at:stamp(),month:CUR,from:null,to:id}]},members:[{id,name,yape,joinedAt:iso(today)}],expenses:[],me:id};
+    }
+    busy(crf,true);
+    try{
+      for(let i=0;i<5;i++){
+        p.home.code=genCode();
+        const {error}=await sb.rpc('create_home',{p_home:p.home,p_members:p.members,p_expenses:p.expenses,p_me:p.me});
+        if(!error){await listMyHomes();await openHome(p.home.code);if(!demo.checked){ui.tab='ajustes';render()}toast('Hogar creado. Código: '+p.home.code);return}
+        if(!/CODIGO_USADO/.test(error.message))throw error;
+      }
+      throw new Error('No se pudo generar un código. Inténtalo de nuevo.');
+    }catch(e){busy(crf,false);err(errText(e))}
+  };
+}
+function openAccount(){
+  document.getElementById('sheet').innerHTML='<div class="sheet-bg" data-a="closeSheet"><div class="sheet wrap"><div class="row"><h2>Tu cuenta</h2><button class="btn ghost" data-a="closeSheet" aria-label="Cerrar">✕</button></div><p class="small muted">Conectado como <b>'+esc(cs.user.email||'')+'</b>. En este hogar eres <b>'+esc(me().name)+'</b>.</p><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn sec" data-a="cHomes">Cambiar de hogar</button><button class="btn sec" data-a="cLogout">Cerrar sesión</button></div></div></div>';
+}
+async function cloudGoHomes(){leaveHome();lsSet(LAST,null);await listMyHomes();cs.view='homes';renderCloud()}
+async function cloudLogout(){leaveHome();lsSet(LAST,null);cs.user=null;cs.view='auth';cs.authMode='login';cs.info='';renderCloud();try{await sb.auth.signOut()}catch(e){}}
+async function cloudResetDemo(){
+  const h=home(), s=seedDemo(today);
+  await syncChain;
+  const {error}=await sb.rpc('reset_demo',{p_code:h.code,p_members:s.members.map(({pin,...m})=>m),p_expenses:s.expenses,p_treasurer:s.treasurer});
+  if(error)throw error;
+  await refresh(); ui.month=CUR; ui.tab='inicio'; render(); toast('Datos de ejemplo actualizados para todos');
+}
+
+/* ===================== Eventos ===================== */
+document.addEventListener('click',ev=>{
+  const t=ev.target.closest('[data-a]'); if(!t)return;
+  const a=t.dataset.a, h=home(), m=me();
+  if(a==='closeSheet'){if(ev.target===t||t.tagName==='BUTTON')closeSheet();return}
+  if(t.tagName==='SELECT'||t.tagName==='DETAILS')return;
+  if(a==='tab'){ui.tab=t.dataset.v;render();window.scrollTo(0,0)}
+  else if(a==='prev'){ui.month=shiftMonth(ui.month,-1);render()}
+  else if(a==='next'){if(ui.month<CUR){ui.month=shiftMonth(ui.month,1);render()}}
+  else if(a==='goCur'){ui.month=CUR;render()}
+  else if(a==='filter'){ui.filter=t.dataset.v;render()}
+  else if(a==='new'){openForm()}
+  else if(a==='edit'){openForm(t.dataset.e)}
+  else if(a==='askVoid'){const e=h.expenses.find(x=>x.id===t.dataset.e);if(!canVoid(e))return toast('Primero desmarca los pagos de este gasto');confirmSheet('¿Seguro que quieres anular este gasto?','"'+esc(e.type==='fijo'?e.cat:e.desc)+'" por '+fmt(e.amount)+' dejará de contar en el balance y en el indicador. Quedará en el historial como anulado por ti.','Sí, anular','doVoid','data-e="'+e.id+'"')}
+  else if(a==='doVoid'){const ok=voidExpense(h,t.dataset.e,m.id);save();closeSheet();render();toast(ok?'Gasto anulado':'Tiene pagos registrados: no se puede anular')}
+  else if(a==='claim'){const e=h.expenses.find(x=>x.id===t.dataset.e);e.claims=e.claims||{};e.claims[m.id]=iso(today);e.log.push({by:m.id,at:stamp(),txt:'Avisó que pagó su parte'});save();render();toast('Listo. '+memberById(h,e.creditor).name+' debe confirmarlo')}
+  else if(a==='reject'){const e=h.expenses.find(x=>x.id===t.dataset.e);const u=t.dataset.u;if(e.claims)delete e.claims[u];e.log.push({by:m.id,at:stamp(),txt:'Indicó que no recibió el pago de '+memberById(h,u).name});ui.open=u;save();render();toast('Marcado como no recibido')}
+  else if(a==='copy'){copy(t.dataset.v)}
+  else if(a==='copyRem'){copy(document.getElementById('remText').textContent)}
+  else if(a==='remind'){openReminder(t.dataset.u)}
+  else if(a==='pay'||a==='toggle'){const e=h.expenses.find(x=>x.id===t.dataset.e);const u=t.dataset.u;if(e.paid[u]){delete e.paid[u];e.log.push({by:m.id,at:stamp(),txt:'Marcó pendiente el pago de '+memberById(h,u).name})}else{e.paid[u]=iso(today);if(e.claims)delete e.claims[u];e.log.push({by:m.id,at:stamp(),txt:'Confirmó el pago de '+memberById(h,u).name})}ui.open=u;save();render();toast(e.paid[u]?'Pago confirmado':'Marcado como pendiente')}
+  else if(CLOUD&&a==='switch'){openAccount()}
+  else if(CLOUD&&(a==='logout'||a==='cLogout')){cloudLogout()}
+  else if(a==='cHomes'){cloudGoHomes()}
+  else if(a==='cAuthMode'){cs.authMode=cs.authMode==='signup'?'login':'signup';cs.msg='';cs.info='';renderCloud()}
+  else if(a==='cOpen'){openHome(t.dataset.v)}
+  else if(a==='cCreate'){cs.view='create';renderCloud()}
+  else if(a==='cBack'){cs.view='homes';renderCloud()}
+  else if(a==='switch'||a==='logout'){const code=store.session.code;store.session=null;save();ui.login={code,step:'pin'};render()}
+  else if(a==='saveYape'){const v=document.getElementById('yape').value.trim();if(!/^[\d ]{6,15}$/.test(v)){document.getElementById('yapeErr').textContent='Escribe un número válido.';return}m.yape=v;save();toast('Número guardado')}
+  else if(a==='addMember'){const g=id=>document.getElementById(id).value;const r=addMemberTo(h,{name:g('nmName'),pin:CLOUD?'':g('nmPin'),yape:g('nmYape'),joinedAt:g('nmDate')});if(!r.ok){document.getElementById('nmErr').textContent=r.err;return}save();render();toast('Conviviente agregado')}
+  else if(a==='askLeave'){const u=t.dataset.u;const x=memberById(h,u);document.getElementById('leave-'+u).innerHTML='<div class="alert info"><b>Registrar la salida de '+esc(x.name)+'</b><div class="field"><label for="lvDate-'+u+'">Último día en el hogar</label><input id="lvDate-'+u+'" type="date" value="'+iso(today)+'" min="'+x.joinedAt+'"></div><span class="small muted">Desde el día siguiente no participa en gastos nuevos y el indicador solo cuenta sus días en el hogar. Sus deudas pendientes se mantienen.</span><span class="err" id="lvErr-'+u+'"></span><div style="display:flex;gap:8px"><button class="btn danger sm" data-a="doLeave" data-u="'+u+'">Confirmar salida</button><button class="btn sec sm" data-a="tab" data-v="ajustes">Cancelar</button></div></div>'}
+  else if(a==='doLeave'){const u=t.dataset.u;const d=document.getElementById('lvDate-'+u).value;const x=memberById(h,u);if(!d||d<x.joinedAt){document.getElementById('lvErr-'+u).textContent='Elige una fecha posterior a su ingreso.';return}if(h.members.filter(y=>!y.leftAt&&y.id!==u).length<1){document.getElementById('lvErr-'+u).textContent='El hogar debe quedar con al menos un conviviente.';return}x.leftAt=d;save();render();toast('Salida registrada')}
+  else if(a==='askReset'){confirmSheet('¿Seguro que quieres restablecer el hogar de ejemplo?','Se borran los gastos, pagos y cambios hechos en este hogar'+(CLOUD?' para todos los convivientes':'')+' y vuelve a los datos iniciales de la demo, con fechas del mes actual. El registro de pruebas manuales se conserva. No se puede deshacer.','Sí, restablecer','doReset','')}
+  else if(a==='doReset'&&CLOUD){closeSheet();cloudResetDemo().catch(toastErr)}
+  else if(a==='doReset'){const keep=(store.homes.RMLY26||{}).manual||{};store.homes.RMLY26=seedDemo(today);store.homes.RMLY26.manual=keep;save();closeSheet();ui.month=CUR;ui.tab='inicio';render();toast('Datos de ejemplo restablecidos')}
+  else if(a==='runTests'){t.textContent='Ejecutando...';t.disabled=true;runTests().then(()=>{ui.tab='pruebas';render()})}
+  else if(a==='xlsPruebas'||a==='xlsMes'){const lbl=t.textContent;t.disabled=true;t.textContent='Preparando archivo...';
+    (a==='xlsMes'?exportMes():exportPruebas()).catch(e=>toast(e&&e.message==='load'?'No se pudo cargar el generador de Excel. Revisa tu conexión.':'No se pudo generar el archivo')).finally(()=>{const b=document.querySelector('[data-a="'+a+'"]');if(b){b.disabled=false;b.textContent=lbl}})}
+  else if(a==='manual'){const c=t.dataset.c;h.manual=h.manual||{};h.manual[c]={status:t.dataset.v,obs:document.getElementById('obs-'+c).value.trim(),by:m.id,at:stamp()};save();render();toast('Prueba registrada')}
+  else if(a==='create'){ui.login={step:'create'};renderLogin()}
+  else if(a==='loginBack'){ui.login={step:'code',code:''};renderLogin()}
+});
+document.addEventListener('change',ev=>{
+  const h=home();
+  if(ev.target.id==='tesMonth'){let v=ev.target.value||CUR;if(v<MIN_FREE)v=MIN_FREE;if(v>shiftMonth(CUR,1))v=shiftMonth(CUR,1);ui.tesMonth=v;render()}
+  else if(ev.target.id==='tes'){const k=ui.tesMonth||CUR;setTreasurer(h,k,ev.target.value,me().id);save();render();toast('Tesorero de '+monthName(k)+' actualizado')}
+});
+document.addEventListener('toggle',ev=>{const d=ev.target;if(d.classList&&d.classList.contains('grp')){ui.open=d.open?d.dataset.g:(ui.open===d.dataset.g?null:ui.open)}},true);
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeSheet()});
+if(CLOUD)cloudBoot();else render();
+</script>
+</body></html>
